@@ -150,3 +150,13 @@ const bc = {
     }
   }
 };
+//debug options
+const debug = {
+  revealAll: () => {
+    //reveal all tiles
+    for(let ti = 0; ti < 2500; ti++) {
+      currentLevel.map[Math.floor(ti / 50)][ti % 50].visible = true;
+      currentLevel.map[Math.floor(ti / 50)][ti % 50].revealed = true;
+    }
+  }
+}

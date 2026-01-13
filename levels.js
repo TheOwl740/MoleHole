@@ -138,20 +138,54 @@ class TileOverlay {
         this.sprite = images.overlays.moleHole.duplicate();
         this.sprite.setActive(new Pair(1, 0));
         break;
-      case "bedLeft":
+      case "greenBedLeft":
         this.sprite = images.overlays.moleHole.duplicate();
         this.sprite.setActive(new Pair(0, 1));
         break;
-      case "bedRight":
+      case "greenBedRight":
         this.sprite = images.overlays.moleHole.duplicate();
         this.sprite.setActive(new Pair(1, 1));
         break;
+      case "pinkBedLeft":
+        this.sprite = images.overlays.moleHole.duplicate();
+        this.sprite.setActive(new Pair(0, 2));
+        break;
+      case "pinkBedRight":
+        this.sprite = images.overlays.moleHole.duplicate();
+        this.sprite.setActive(new Pair(1, 2));
+        break;
+      case "orangeBedLeft":
+        this.sprite = images.overlays.moleHole.duplicate();
+        this.sprite.setActive(new Pair(0, 3));
+        break;
+      case "orangeBedRight":
+        this.sprite = images.overlays.moleHole.duplicate();
+        this.sprite.setActive(new Pair(1, 3));
+        break;
+      case "dresser":
+        this.sprite = images.overlays.moleHole.duplicate();
+        this.sprite.setActive(new Pair(0, 4));
+        break;
+      case "monitor":
+        this.sprite = images.overlays.moleHole.duplicate();
+        this.sprite.setActive(new Pair(1, 4));
+        break;
+      case "ballDresser":
+        this.sprite = images.overlays.moleHole.duplicate();
+        this.sprite.setActive(new Pair(0, 5));
+        this.sprite.y += tileSize / 3;
+        break;
+      case "teddy":
+        this.sprite = images.overlays.moleHole.duplicate();
+        this.sprite.setActive(new Pair(1, 5));
+        break;
       }
+
   }
   attach(parentTile) {
     this.parentTile = parentTile;
-    //nonwalkable overlays
-    this.parentTile.walkable = ["couchLeft", "couchRight", "bedLeft"].includes(this.overlayType);
+    //designated walkable overlays
+    this.parentTile.walkable = ["couchLeft", "couchRight", "greenBedRight", "pinkBedRight", "orangeBedRight"].includes(this.overlayType);
   }
   render() {
     rt.renderImage(this.parentTile.transform, this.sprite);
@@ -173,15 +207,20 @@ class Level {
     this.zone = "";
     //assign zone
     if(this.levelId === 0) {
-      this.zone = "The Mole Hill"
+      this.zone = "The Mole Hill";
+      this.tileset = images.tilesets.dirt;
     } else if(this.levelId >= 4) {
-      this.zone = "Buggy Burrows"
+      this.zone = "Buggy Burrows";
+      this.tileset = images.tilesets.dirt;
     } else if(this.levelId >= 8) {
-      this.zone = "The Gnome Home"
+      this.zone = "The Gnome Home";
+      this.tileset = images.tilesets.dirt;
     } else if(this.levelId >= 12) {
-      this.zone = "Snakey Stronghold"
+      this.zone = "Snakey Stronghold";
+      this.tileset = images.tilesets.dirt;
     } else if(this.levelId >= 16) {
-      this.zone = "The Mustelid Mafia"
+      this.zone = "The Mustelid Mafia";
+      this.tileset = images.tilesets.dirt;
     }
     //populate map with walls
     for(let i = 0; i < 50; i++) {
@@ -190,13 +229,63 @@ class Level {
         this.map[i][ii] = new Wall(new Pair((i - 25) * (tileSize - 1), (ii - 25) * (tileSize - 1)), new Pair(i, ii), images.tilesets.dirt, this);
       }
     }
-    //molehill pre fall
-    if(levelId === 0) {
-      tileMaps.moleHole.marshallsRoom.stamp(this, new Pair(21, 21))
-      this.playerSpawn = this.getIndex(new Pair(21, 21)).transform.duplicate();
-    //buggy burrows
-    } else {
-      
+    //get set of rooms
+    let activeRooms = [];
+    let activeIds = [];
+    let currentSelection = null;
+    //first 5 required rooms
+    while(activeRooms.length < 5) {
+      currentSelection = tileMaps[tk.randomNum(0, tileMaps.length - 1)];
+      if((!activeIds.includes(currentSelection.id)) && (currentSelection.usableFloors === "all" || currentSelection.usableFloors.includes(this.levelId))) {
+        activeRooms.push(currentSelection);
+        activeIds.push(currentSelection.id);
+      }
+    }
+    //additional spawn attempts for later levels
+    for(let spawnAttempt = 0; spawnAttempt < this.levelId; spawnAttempt++) {
+      currentSelection = tileMaps[tk.randomNum(0, tileMaps.length - 1)];
+      if((!activeIds.includes(currentSelection.id)) && (currentSelection.usableFloors === "all" || currentSelection.usableFloors.includes(this.levelId))) {
+        activeRooms.push(currentSelection);
+        activeIds.push(currentSelection.id);
+      }
+    }
+    //place rooms randomly until all are open
+    let activeIndices = [];
+    let loopActive = true;
+    while(loopActive) {
+      loopActive = false;
+      activeIndices = [];
+      activeRooms.forEach((room) => {
+        activeIndices.push(new Pair(tk.randomNum(2 + room.h, 49), tk.randomNum(0, 47 - room.w)));
+      });
+      for(let room = 0; room < activeRooms.length; room++) {
+        for(let comparedRoom = 0; comparedRoom < activeRooms.length; comparedRoom++) {
+          if(room !== comparedRoom) {
+            if(tk.detectCollision(activeRooms[room].getIndexCollider(activeIndices[room]), activeRooms[comparedRoom].getIndexCollider(activeIndices[comparedRoom]))) {
+              loopActive = true;
+            }
+          }
+        }
+      }
+    }
+    //stamp rooms and collect entrances and nonwalkables
+    let entranceIndices = [];
+    let nonwalkableIndices = [];
+    for(let room = 0; room < activeRooms.length; room++) {
+      let stampObj = activeRooms[room].stamp(this, activeIndices[room]);
+      nonwalkableIndices = nonwalkableIndices.concat(stampObj.nonwalkableIndices);
+      entranceIndices = entranceIndices.concat(stampObj.entranceIndices);
+    }
+    //carve corridors
+    let carvePather = new PathfindingController(this.map, false);
+    for(let e1 = 0; e1 < entranceIndices.length; e1++) {
+      for(let e2 = 0; e2 < entranceIndices.length; e2++) {
+        if(e1 !== e2) {
+          carvePather.pathfind(entranceIndices[e1], entranceIndices[e2], nonwalkableIndices, 5000).forEach((carveIndex) => {
+            this.map[carveIndex.x][carveIndex.y] = new Floor(this.getIndex(carveIndex).transform, carveIndex, this.tileset, this, null);
+          });
+        }
+      }
     }
     //reskin floor adjacent walls and pits and attach overlays
     for(let i = 0; i < 50; i++) {
@@ -206,6 +295,14 @@ class Level {
           activeTile.assignDirectionality();
         }
         activeTile.attachOverlay()
+      }
+    }
+    //set player spawn
+    if(this.levelId === 0) {
+      for(let room = 0; room < activeRooms.length; room++) {
+        if(activeRooms[room].id === "marshallsRoom") {
+          this.playerSpawn = this.getIndex(new Pair(activeIndices[room].y + 5, activeIndices[room].x - 1)).transform.duplicate();
+        }
       }
     }
   }
@@ -304,72 +401,169 @@ class Level {
 //ROOM TEMPLATES
 //room super class
 class Room {
-  constructor(w, h, tileset, tileOverlays, tileMap) {
+  constructor(w, h, id, entranceCount, usableFloors, tileOverlays, tileMap) {
     [this.w, this.h] = [w, h];
-    this.tileset = tileset;
+    this.id = id;
+    this.entranceCount = entranceCount;
+    this.usableFloors = usableFloors;
     this.tileOverlays = tileOverlays;
     this.tileMap = tileMap;
   }
   stamp(level, tlIndex) {
-    let entranceIndices = [];
+    let tileset = level.tileset.duplicate();
+    const retObj = {
+      entranceIndices: [],
+      nonwalkableIndices: []
+    }
+    //apply tiles
     for(let i = 0; i < this.w; i++) {
       for(let ii = 0; ii < this.h; ii++) {
         let activeTile = level.map[tlIndex.y + i][tlIndex.x - ii];
         switch(this.tileMap[ii][i]) {
           case 'f':
-            level.map[tlIndex.y + i][tlIndex.x - ii] = new Floor(activeTile.transform.duplicate(), activeTile.index.duplicate(), this.tileset, level, null);
+            level.map[tlIndex.y + i][tlIndex.x - ii] = new Floor(activeTile.transform.duplicate(), activeTile.index.duplicate(), tileset, level, null);
             break;
           case 'w':
-            level.map[tlIndex.y + i][tlIndex.x - ii] = new Wall(activeTile.transform.duplicate(), activeTile.index.duplicate(), this.tileset, level, null);
+            level.map[tlIndex.y + i][tlIndex.x - ii] = new Wall(activeTile.transform.duplicate(), activeTile.index.duplicate(), tileset, level, null);
             break;
           case 'p':
-            level.map[tlIndex.y + i][tlIndex.x - ii] = new Pit(activeTile.transform.duplicate(), activeTile.index.duplicate(), this.tileset, level, null);
+            level.map[tlIndex.y + i][tlIndex.x - ii] = new Pit(activeTile.transform.duplicate(), activeTile.index.duplicate(), tileset, level, null);
             break;
           case 'e':
-            level.map[tlIndex.y + i][tlIndex.x - ii] = new Floor(activeTile.transform.duplicate(), activeTile.index.duplicate(), this.tileset, level, null);
-            entranceIndices.push(activeTile.index.duplicate());
+            level.map[tlIndex.y + i][tlIndex.x - ii] = new Wall(activeTile.transform.duplicate(), activeTile.index.duplicate(), tileset, level, null);
+            retObj.entranceIndices.push(activeTile.index.duplicate());
             break;
           }
+        //note entrances
+        if(this.tileMap[ii][i] !== 'e') {
+          retObj.nonwalkableIndices.push(activeTile.index.duplicate())
+        }
       }
     }
-    this.tileOverlays.forEach((overlayModule) => {
-      let targetTile = level.map[tlIndex.x + overlayModule.index.x][tlIndex.y - overlayModule.index.y];
-      targetTile.overlay = overlayModule.overlay;
-    });
-    return entranceIndices;
+    //apply overlays
+    if(this.tileOverlays) {
+      this.tileOverlays.forEach((overlayModule) => {
+        let targetTile = level.map[tlIndex.y + overlayModule.index.x][tlIndex.x - overlayModule.index.y];
+        targetTile.overlay = overlayModule.overlay;
+      });
+    }
+    //trim entrances
+    while(retObj.entranceIndices.length > this.entranceCount) {
+      let farthestDist = false;
+      let farthestEntrance;
+      let currentDist;
+      for(let ent = 0; ent < retObj.entranceIndices.length; ent++) {
+        currentDist = tk.calcDistance(retObj.entranceIndices[ent], new Pair(24, 24))
+        if(!farthestDist || farthestDist < currentDist) {
+          farthestDist = currentDist;
+          farthestEntrance = ent;
+        }
+      }
+      retObj.entranceIndices.splice(farthestEntrance, 1);
+    }
+    return retObj;
+  }
+  getIndexCollider(tlIndex) {
+    return new Collider(tlIndex.duplicate().add(new Pair(((this.w / 2) + 1), (this.w / 2) + 1)), new Rectangle(0, this.w + 2, this.h + 2));
   }
 }
 
-const tileMaps = {
-  moleHole: {
-    pitRoom: new Room(6, 4, images.tilesets.dirt, [
-      {
-        overlay: new TileOverlay("couchLeft"),
-        index: new Pair(1, 1)
-      },
-      {
-        overlay: new TileOverlay("couchRight"),
-        index: new Pair(2, 1)
-      }
-    ], [
-      ['f','f','f','f','f','f'],
-      ['f','f','f','f','p','p'],
-      ['f','f','f','f','p','p'],
-      ['f','f','e','f','f','f'],
-    ]),
-    marshallsRoom: new Room(5, 3, images.tilesets.dirt, [
-      {
-        overlay: new TileOverlay("bedLeft"),
-        index: new Pair(3, 0)
-      },
-      {
-        overlay: new TileOverlay("bedRight"),
-        index: new Pair(4, 0)
-      }
-    ], [
-      ['f','e','f','f','f'],
-      ['f','f','f','f','f'],
-      ['f','f','f','f','f'],
-    ]),
-  }
-}
+const tileMaps = [
+  new Room(8, 6, "pitRoom", 2, [0], [
+    {
+      overlay: new TileOverlay("couchLeft"),
+      index: new Pair(2, 2)
+    },
+    {
+      overlay: new TileOverlay("couchRight"),
+      index: new Pair(3, 2)
+    }
+  ], [
+    ['w','e','w','w','w','w','e','w'],
+    ['w','f','f','f','f','f','f','w'],
+    ['w','f','f','f','f','p','p','w'],
+    ['w','f','f','f','f','p','p','w'],
+    ['w','f','f','f','f','f','f','w'],
+    ['w','e','w','w','w','w','e','w']
+  ]),
+  new Room(7, 5, "marshallsRoom", 1, [0], [
+    {
+      overlay: new TileOverlay("greenBedLeft"),
+      index: new Pair(4, 1)
+    },
+    {
+      overlay: new TileOverlay("greenBedRight"),
+      index: new Pair(5, 1)
+    },
+    {
+      overlay: new TileOverlay("ballDresser"),
+      index: new Pair(1, 1)
+    }
+  ], [
+    ['w','w','e','w','w','w','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','e'],
+    ['w','w','e','w','w','w','w']
+  ]),
+  new Room(7, 5, "minniesRoom", 1, [0], [
+    {
+      overlay: new TileOverlay("pinkBedLeft"),
+      index: new Pair(4, 1)
+    },
+    {
+      overlay: new TileOverlay("pinkBedRight"),
+      index: new Pair(5, 1)
+    },
+    {
+      overlay: new TileOverlay("teddy"),
+      index: new Pair(5, 2)
+    }
+  ], [
+    ['w','w','e','w','w','w','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','w','e','w','w','e','w']
+  ]),
+  new Room(7, 5, "maxwellsRoom", 1, [0], [
+    {
+      overlay: new TileOverlay("greenBedLeft"),
+      index: new Pair(4, 1)
+    },
+    {
+      overlay: new TileOverlay("greenBedRight"),
+      index: new Pair(5, 1)
+    },
+    {
+      overlay: new TileOverlay("monitor"),
+      index: new Pair(1, 1)
+    }
+  ], [
+    ['w','w','w','e','w','w','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','e','w','w','w','e','w']
+  ]),
+  new Room(7, 5, "parentsRoom", 1, [0], [
+    {
+      overlay: new TileOverlay("orangeBedLeft"),
+      index: new Pair(4, 1)
+    },
+    {
+      overlay: new TileOverlay("orangeBedRight"),
+      index: new Pair(5, 1)
+    },
+    {
+      overlay: new TileOverlay("dresser"),
+      index: new Pair(1, 1)
+    }
+  ], [
+    ['w','w','w','e','w','w','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','e'],
+    ['w','w','w','e','w','w','w']
+  ])
+]

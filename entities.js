@@ -13,7 +13,7 @@ class Player {
     this.skillPoints = 0;
     this.lastPosition;
     this.forceMove = false;
-    this.leftFacing = false;
+    this.leftFacing = true;
     this.sprites = {
       body: images.moles.marshall.body.duplicate()
     }
