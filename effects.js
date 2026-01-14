@@ -1,5 +1,7 @@
-//CLASSES
-//effect control class
+//effects.js contains the effects system classes, and the dialog box class
+
+//EFFECT SYSTEM
+//effect control class handles effect objects
 class EffectController {
   constructor() {
     this.activeEffects = [];
@@ -106,5 +108,37 @@ class WaitEffect extends Effect {
     if(this.actor.tile.visible) {
       rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "z", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#8500d2", this.remainingDuration / 100));
     }
+  }
+}
+
+//DIALOG CLASS
+//dialog instances go in the dialog controller.
+class Dialog {
+  constructor(entity, text) {
+    this.entity = entity;
+    this.text = text;
+    //assign tilescheme
+    switch(entity.eType) {
+      case "player":
+        this.tileScheme = entityTS.player;
+        break;
+      case "enemy":
+        this.tileScheme = entityTS.enemy;
+        break;
+      case "npc":
+        this.tileScheme = entityTS.npc;
+        break;
+      default:
+        this.tileScheme = entityTS.nme;
+        break;
+    }
+    this.dialogBox = new Textbox(this.tileScheme, new Pair(cs.w / 2, cs.h * -0.85), new Pair(cs.w * 0.9, cs.h * 0.2), new TextNode("pixelFont", this.text, 0, landscape ? cs.w / 60 : cs.h / 30, "left"));
+    this.pfpBox = new BlankTile(this.tileScheme, new Pair(tileSize, cs.h * -0.65), new Pair(tileSize * 1.2, tileSize * 1.2));
+  }
+  render() {
+    console.log(this.dialogBox.textLines[0])
+    this.dialogBox.render();
+    this.pfpBox.render();
+    hrt.renderImage(tk.pairMath(this.pfpBox.transform, new Pair(0, tileSize / 3), "subtract"), this.entity.sprites.body);
   }
 }

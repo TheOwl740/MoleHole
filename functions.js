@@ -1,21 +1,5 @@
-//FUNCTIONS
-//renders everything during game and updates turns and controls
-function updateGame() {
-  //update turn control
-  currentTC.update();
-  //update level
-  currentLevel.update();
-  //canvas clear
-  cs.fillAll(new Fill("#000000", 1));
-  //render map
-  currentLevel.render();
-  //render player
-  player.render();
-  //update player controls
-  player.updateAux();
-  //update effects
-  currentEC.update();
-}
+//functions.js contains all the functions used in other files.
+
 //renders and updates button on homescreen
 function updateHomescreen() {
   //canvas clear
@@ -113,6 +97,8 @@ function updateHUD() {
   if((et.getKey("q") || (tk.detectCollision(et.cursor, buttonData.skillTree.collider()) && (landscape ? et.getClick("left") : tapData.realClick))) && bc.ready()) {
     gameState = "skillTree";
   }
+  //update dialogs
+  dialogController.update();
 }
 //renders fail screen
 function updateFailscreen() {
@@ -203,7 +189,7 @@ function rotationalTile(index, angle, magnitude) {
 }
 //tile based raycast, blocked by nonwalkables.. 
 function raycast(originIndex, targetIndex) {
-  let angle = tk.calcAngle(originIndex, targetIndex);
+  let angle = tk.pairMath(originIndex, targetIndex, "angle");
   for(let seg = 0; seg < Math.round(currentPC.heuristic(originIndex, targetIndex)); seg++) {
     let activeTile = rotationalTile(originIndex, angle, seg);
     if(activeTile.type === "wall" || (activeTile.type === "door" && activeTile.entity === null)) {

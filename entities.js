@@ -1,7 +1,11 @@
-//player class
+//entities.js contains all classes related to entities, including the player, npcs, nmes, and enemies.
+
+//PLAYER
+//player class controls normal entity things as well as xp.
 class Player {
   constructor(transform) {
     this.type = "player";
+    this.eType = "player"
     this.transform = transform;
     this.tile;
     this.movePath = null;
@@ -13,6 +17,7 @@ class Player {
     this.skillPoints = 0;
     this.lastPosition;
     this.forceMove = false;
+    this.weapon = null;
     this.leftFacing = true;
     this.sprites = {
       body: images.moles.marshall.body.duplicate()
@@ -24,10 +29,7 @@ class Player {
     }
     this.melee = {
       time: 1,
-      damage: 7,
-      getHit: () => {
-        return tk.randomNum(Math.floor(this.melee.damage * 0.6), Math.floor(this.melee.damage * 1.4));
-      }
+      damage: 7
     };
     this.health = {
       current: 20,
@@ -152,6 +154,10 @@ class Player {
       this.health.regenTime = this.health.regenMax;
     }
   }
+  getMelee() {
+    let baseDamage = this.melee.damage + (this.weapon === null ? 0 : this.weapon.damage);
+    return tk.randomNum(Math.floor(baseDamage * 0.6), Math.floor(baseDamage * 1.4));
+  }
   damage(attackAction) {
     this.health.current -= attackAction.damage;
     this.targetIndex = null;
@@ -184,23 +190,38 @@ class Player {
     }
   }
 }
-//general enemy class
+
+//NPCS
+//general NPC class template
+
+//NMES
+//general non moving entity class template
+
+//ENEMIES
+//general enemy class template
 class Enemy {
-  constructor(transform, shape, tile) {
+  constructor(transform, tile, sprites) {
+    this.eType = "enemy"
     this.transform = transform;
-    this.shape = shape;
+    this.leftFacing = true;
+    this.sprites = sprites;
     this.tile;
     updateTERelationship(null, this, tile);
   }
-  collider() {
-    return new Collider(this.transform, this.shape);
+  damage(attackAction) {
+    this.health.current -= attackAction.damage;
+  }
+  getMelee() {
+    let baseDamage = this.melee.damage + (this.weapon === null ? 0 : this.weapon.damage);
+    return tk.randomNum(Math.floor(baseDamage * 0.6), Math.floor(baseDamage * 1.4));
   }
 }
-class Cube extends Enemy {
+class WigglyWorm extends Enemy {
   constructor(transform, tile) {
-    super(transform, new Rectangle(0, tileSize * 0.75, tileSize * 0.75), tile);
-    this.type = "cube";
-    this.fill = new Fill("#f94f01", 1);
+    super(transform, tile, {
+      body: images.enemies.wigglyWorm.duplicate()
+    });
+    this.type = "wiggly worm";
     this.nextTurn = tk.randomNum(0, 1000) / 1000;
     this.moveTime = 1;
     this.state = "sleeping";
@@ -208,12 +229,10 @@ class Cube extends Enemy {
     this.path = null;
     this.xpValue = tk.randomNum(3, 6);
     this.chaseTime = 0;
+    this.weapon = null;
     this.melee = {
       time: 1,
       damage: 3,
-      getHit: () => {
-        return tk.randomNum(Math.floor(this.melee.damage * 0.6), Math.floor(this.melee.damage * 1.4));
-      }
     };
     this.health = {
       current: 10,
@@ -221,13 +240,8 @@ class Cube extends Enemy {
     };
   }
   render() {
-    if(this.tile.visible) {
-      let sinMultiplier = new Pair((Math.sin(ec / 50) / 4) + 1, (Math.sin(ec / 30) / 4) + 1);
-      rt.renderRectangle(this.transform, new Rectangle(0, this.shape.w * (sinMultiplier.x ** 0.3), this.shape.h * (sinMultiplier.x ** 0.3)), new Fill(this.fill.color, 0.3 * sinMultiplier.x), null);
-      rt.renderRectangle(this.transform, new Rectangle(0, this.shape.w * (sinMultiplier.y ** 0.3) * 0.75, this.shape.h * (sinMultiplier.y ** 0.3) * 0.75), new Fill(this.fill.color, 0.3 * sinMultiplier.y), null);
-      if(this.health.current < this.health.max) {
-        renderHealthbar(this, tileSize);
-      }
+    if(this.health.current < this.health.max) {
+      renderHealthbar(this, tileSize);
     }
   }
   turnPing() {
@@ -332,9 +346,6 @@ class Cube extends Enemy {
     }
     //backup return
     return null;
-  }
-  damage(attackAction) {
-    this.health.current -= attackAction.damage;
   }
   updatePath() {
     this.path = currentPC.pathfind(this.tile.index, this.targetIndex, currentLevel.getNonWalkables(this), 2000);

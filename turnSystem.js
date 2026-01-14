@@ -1,3 +1,6 @@
+//turnSystem.js contains all the action type classes and turn controller
+
+//CONTROLLER
 //turn controller class
 class TurnController {
   constructor() {
@@ -35,7 +38,7 @@ class TurnController {
   //updates the turn order and runs actions
   update() {
     //if no actions to be done
-    if(this.currentAction === null) {
+    if(this.currentAction === null || dialogController.queued.length > 0) {
       //hold an action object or null placeholder
       let returnAction = this.turnOrder[0].runTurn();
       //if action object is ready
@@ -80,6 +83,8 @@ class TurnController {
     }
   }
 }
+
+//ACTIONS
 //action class for player and entity actions sent to turn manager
 class Action {
   constructor(actor, turnIncrease, duration) {
@@ -95,8 +100,8 @@ class Movement extends Action {
     super(actor, actor.moveTime, 15);
     this.type = "move";
     this.targetTile = targetTile;
-    this.stepLength = tk.calcDistance(this.actor.transform, this.targetTile.transform) / this.duration;
-    this.moveDirection = tk.calcAngle(this.actor.transform, this.targetTile.transform);
+    this.stepLength = tk.pairMath(this.actor.transform, this.targetTile.transform, "distance") / this.duration;
+    this.moveDirection = tk.pairMath(this.actor.transform, this.targetTile.transform, "angle");
   }
   update() {
     //on start
@@ -134,9 +139,9 @@ class Melee extends Action {
     super(actor, actor.melee.time, 15);
     this.type = "attack";
     this.targetEntity = targetEntity;
-    this.damage = actor.melee.getHit();
+    this.damage = actor.getMelee();
     this.surprise = false;
-    this.attackDirection = tk.calcAngle(this.actor.transform, this.targetEntity.transform);
+    this.attackDirection = tk.pairMath(this.actor.transform, this.targetEntity.transform, "angle");
     if(targetEntity.type !== "player" && !targetEntity.playerLock) {
       this.damage = Math.floor(this.damage * 1.5);
       this.surprise = true;

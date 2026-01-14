@@ -1,3 +1,5 @@
+//script.js controls the high level flow of the game through function calls.
+
 //MAIN LOOP
 function update() {
   //increment epoch counter
@@ -8,13 +10,20 @@ function update() {
   if(!landscape) {
     tapData.update();
   }
+  //update game based on state
   switch(gameState) {
     case "homescreen":
       updateHomescreen()
       break;
-    case "inGame":
+      case "inGame":
+      cs.fillAll(new Fill("#000000", 1));
       updateCamera();
-      updateGame();
+      currentTC.update();
+      currentLevel.update();
+      currentLevel.render();
+      player.render();
+      player.updateAux();
+      currentEC.update();
       updateHUD();
       break;
     case "skillTree":
@@ -26,6 +35,6 @@ function update() {
   }
 }
 
-//start timer
+//TIMER START
 gt = new GameTimer(update, 16);
 gt.start();

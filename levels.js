@@ -1,3 +1,5 @@
+//levels.js contains all level and tile related classes and the set of room tilemaps.
+
 //TILE SYSTEM
 //tile super class
 class Tile {
@@ -179,8 +181,7 @@ class TileOverlay {
         this.sprite = images.overlays.moleHole.duplicate();
         this.sprite.setActive(new Pair(1, 5));
         break;
-      }
-
+    }
   }
   attach(parentTile) {
     this.parentTile = parentTile;
@@ -192,7 +193,8 @@ class TileOverlay {
   }
 }
 
-//LEVEL TEMPLATE
+//LEVELS AND ROOMS
+//level class for each floor
 class Level {
   constructor(levelId) {
     //data initialization
@@ -398,8 +400,7 @@ class Level {
   }
 }
 
-//ROOM TEMPLATES
-//room super class
+//room class for level stamping
 class Room {
   constructor(w, h, id, entranceCount, usableFloors, tileOverlays, tileMap) {
     [this.w, this.h] = [w, h];
@@ -453,7 +454,7 @@ class Room {
       let farthestEntrance;
       let currentDist;
       for(let ent = 0; ent < retObj.entranceIndices.length; ent++) {
-        currentDist = tk.calcDistance(retObj.entranceIndices[ent], new Pair(24, 24))
+        currentDist = tk.pairMath(retObj.entranceIndices[ent], new Pair(24, 24), "distance")
         if(!farthestDist || farthestDist < currentDist) {
           farthestDist = currentDist;
           farthestEntrance = ent;

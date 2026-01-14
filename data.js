@@ -1,3 +1,5 @@
+//data.js contains all of the global data used by the game
+
 //ENVIRONMENT INITIALIZATION
 //engine tool constants
 const cs = new Canvas(document.getElementById("canvas"));
@@ -5,7 +7,6 @@ const rt = new RenderTool(cs);
 const et = new EventTracker(cs);
 const tk = new Toolkit();
 const hrt = new RenderTool(cs);
-const hts = new TileScheme(hrt, new Fill("#5c0051", 1), new Fill("#c23eb2", 1), new Border("#780d6b", 1, 5, "bevel"), new Border("#3f0038", 1, 5, "bevel"), new Fill("#FFFFFF", 1))
 let gt;
 //canvas initialization
 cs.setDimensions(window.visualViewport?.width || window.innerWidth, window.visualViewport?.height || window.innerHeight);
@@ -14,7 +15,7 @@ cs.cx.imageSmoothingEnabled = false;
 et.tabEnabled = false;
 et.rightClickEnabled = false;
 
-//GLOBAL VARIABLES
+//GENERAL GLOBAL VARIABLES
 //freecam mode bool
 let freecam = true;
 //epoch counter (ticks since game start)
@@ -61,7 +62,7 @@ const images = {
   }
 }
 
-//OBJECTS
+//GAME OBJECTS
 //mobile drag controller
 const tapData = {
   holdTime: 0,
@@ -150,6 +151,25 @@ const bc = {
     }
   }
 };
+//dialog data
+const dialogController = {
+  queued: [],
+  update: () => {
+    if(dialogController.queued.length > 0) {
+      dialogController.queued[0].render();
+      if(et.getClick("left") && bc.ready()) {
+        dialogController.queued.shift();
+      }
+    }
+  }
+}
+//tileschema for dialog boxes of different entities
+const entityTS = {
+  player: new TileScheme(hrt, new Fill("#1da7a9", 1), new Border("#199092", 1, 3, "bevel"), new Border("#22bbbd", 1, 3, "bevel"), new Fill("#000000", 1)),
+  enemy: new TileScheme(hrt, new Fill("#a91d1d", 1), new Border("#921919", 1, 3, "bevel"), new Border("#bd2222", 1, 3, "bevel"), new Fill("#000000", 1)),
+  npc: new TileScheme(hrt, new Fill("#3ba91d", 1), new Border("#259219", 1, 3, "bevel"), new Border("#32bd22", 1, 3, "bevel"), new Fill("#000000", 1)),
+  nme: new TileScheme(hrt, new Fill("#a4a4a4", 1), new Border("#949494", 1, 3, "bevel"), new Border("#cfcfcf", 1, 3, "bevel"), new Fill("#000000", 1))
+};
 //debug options
 const debug = {
   revealAll: () => {
@@ -158,5 +178,9 @@ const debug = {
       currentLevel.map[Math.floor(ti / 50)][ti % 50].visible = true;
       currentLevel.map[Math.floor(ti / 50)][ti % 50].revealed = true;
     }
+  },
+  teleport: (targetTile) => {
+    player.transform = targetTile.transform.duplicate();
+    updateTERelationship(player.tile, player, targetTile);
   }
-}
+};
