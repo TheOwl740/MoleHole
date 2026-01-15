@@ -3,32 +3,36 @@
 //TILE SYSTEM
 //tile super class
 class Tile {
-  constructor(transform, index, sprite, parentLevel) {
+  constructor(transform, index, sprite, parentLevel, overlay) {
+    //location info
     this.transform = transform;
     this.index = index;
+    //tileset spritesheet
     this.sprite = sprite.duplicate();
-    this.revealed = false;
-    this.visible = false;
+    //level containing this tile
     this.parentLevel = parentLevel;
+    //has been revealed
+    this.revealed = false;
+    //is currently in line of sight
+    this.visible = false;
+    //overlay object or null
+    this.overlay = overlay;
+    //subclass specific
+    this.type;
+    //boolean is walkable
+    this.walkable;
   }
+  //returns this tile's collider
   collider() {
     return new Collider(this.transform, tileShape);
   }
+  //bonds an assigned overlay to this tile
   attachOverlay() {
     if(this.overlay) {
       this.overlay.attach(this);
     }
   }
-}
-//wall tile class
-class Wall extends Tile {
-  constructor(transform, index, sprite, parentLevel, overlay) {
-    super(transform, index, sprite, parentLevel);
-    this.type = "wall"
-    this.walkable = false;
-    this.sprite.setActive(new Pair(tk.randomNum(0, 1), 3));
-    this.overlay = overlay;
-  }
+  //render function is mostly uniform
   render() {
     if(this.revealed) {
       rt.renderImage(this.transform, this.sprite);
@@ -36,9 +40,18 @@ class Wall extends Tile {
         this.overlay.render();
       }
       if(!this.visible) {
-        rt.renderRectangle(this.transform, tileShape, new Fill("#000000", 0.7), null);
+        rt.renderRectangle(this.transform, tileShape, new Fill("#000000", 0.5), null);
       }
     }
+  }
+}
+//wall tile class
+class Wall extends Tile {
+  constructor(transform, index, sprite, parentLevel, overlay) {
+    super(transform, index, sprite, parentLevel, overlay);
+    this.type = "wall"
+    this.walkable = false;
+    this.sprite.setActive(new Pair(tk.randomNum(0, 1), 3));
   }
   //choose appropriate sprite to match adjacent floor positions
   assignDirectionality() {
@@ -63,13 +76,14 @@ class Wall extends Tile {
 //pit tile class
 class Pit extends Tile {
   constructor(transform, index, sprite, parentLevel, overlay) {
-    super(transform, index, sprite, parentLevel);
+    super(transform, index, sprite, parentLevel, overlay);
     this.type = "pit"
     this.walkable = false;
     this.sprite.setActive(new Pair(tk.randomNum(0, 1), 4));
-    this.overlay = overlay;
+    //boolean determining if a sprite should be rendered (below floor/wall)
     this.usingSprite = false;
   }
+  //custom render function because some pits don't have sprites
   render() {
     if(this.revealed) {
       if(this.usingSprite) {
@@ -106,24 +120,14 @@ class Pit extends Tile {
 //floor tile subclass
 class Floor extends Tile {
   constructor(transform, index, sprite, parentLevel, overlay) {
-    super(transform, index, sprite, parentLevel);
+    super(transform, index, sprite, parentLevel, overlay);
     this.type = "floor"
     this.walkable = true;
-    this.entity = null;
+    //floor sprites can be freely rotated
     this.sprite.r = tk.randomNum(0, 3) * 90;
     this.sprite.setActive(new Pair(tk.randomNum(0, 1), tk.randomNum(0, 1)));
-    this.overlay = overlay;
-  }
-  render() {
-    if(this.revealed) {
-      rt.renderImage(this.transform, this.sprite);
-      if(this.overlay) {
-        this.overlay.render();
-      }
-      if(!this.visible) {
-        rt.renderRectangle(this.transform, tileShape, new Fill("#000000", 0.7), null);
-      }
-    }
+    //entity bond point
+    this.entity = null;
   }
 }
 //tile overlay
@@ -202,6 +206,7 @@ class Level {
     this.map = [];
     this.enemies = [];
     this.npcs = [];
+    this.nmes = [];
     this.items = [];
     this.playerSpawn = null;
     this.visionRange = 5;
@@ -211,6 +216,7 @@ class Level {
     if(this.levelId === 0) {
       this.zone = "The Mole Hill";
       this.tileset = images.tilesets.dirt;
+      this.tutorialStage = 0;
     } else if(this.levelId >= 4) {
       this.zone = "Buggy Burrows";
       this.tileset = images.tilesets.dirt;
@@ -301,9 +307,11 @@ class Level {
     }
     //set player spawn
     if(this.levelId === 0) {
+      //find marshall's room and place minnie and marshall there
       for(let room = 0; room < activeRooms.length; room++) {
         if(activeRooms[room].id === "marshallsRoom") {
           this.playerSpawn = this.getIndex(new Pair(activeIndices[room].y + 5, activeIndices[room].x - 1)).transform.duplicate();
+          this.npcs.push(new Minnie(this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 1)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 1))))
         }
       }
     }
@@ -315,15 +323,31 @@ class Level {
     for(let i = 0; i < this.enemies.length; i++) {
       this.enemies[i].render();
     }
+    for(let i = 0; i < this.npcs.length; i++) {
+      this.npcs[i].render();
+    }
+    for(let i = 0; i < this.nmes.length; i++) {
+      this.nmes[i].render();
+    }
+    for(let i = 0; i < this.items.length; i++) {
+      this.items[i].render();
+    }
   }
   update() {
     for(let i = 0; i < this.enemies.length; i++) {
       if(this.enemies[i].health.current < 1) {
         currentTC.remove(this.enemies[i]);
-        if(this.enemies[i].type === "cube") {
-          currentEC.add(new CubeDeath(this.enemies[i]));
-          player.addXP(this.enemies[i].xpValue);
-        }
+        currentEC.add(Death(this.enemies[i]));
+        player.addXP(this.enemies[i].xpValue);
+        this.enemies[i].tile.entity = null;
+        this.enemies.splice(i, 1);
+        i--;
+      }
+    }
+    for(let i = 0; i < this.npcs.length; i++) {
+      if(this.npcs[i].health.current < 1) {
+        currentTC.remove(this.npcs[i]);
+        currentEC.add(new Death(this.npcs[i]));
         this.enemies[i].tile.entity = null;
         this.enemies.splice(i, 1);
         i--;
@@ -348,10 +372,19 @@ class Level {
   getNonWalkables(client) {
     const retList = [];
     //get entities that can't be walked on
-    if(client.type !== "player" && client.type !== "level") {
-      this.enemies.forEach((enemy) => {
-        retList.push(enemy.tile.index.duplicate());
-      });
+    if(client.type !== "level") {
+      if(client.type === "enemy" || client.type === "npc") {
+        this.enemies.forEach((enemy) => {
+          if(!enemy.tile.index.isEqualTo(client.tile.index)) {
+            retList.push(enemy.tile.index.duplicate());
+          }
+        });
+        this.npcs.forEach((npc) => {
+          if(!npc.tile.index.isEqualTo(client.tile.index)) {
+            retList.push(npc.tile.index.duplicate());
+          }
+        });
+      }
     }
     //get walls
     for(let ct = 0; ct < 2500; ct++) {

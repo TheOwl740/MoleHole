@@ -38,8 +38,6 @@ const landscape = cs.w > cs.h;
 const tileSize = Math.floor(landscape ? cs.w / 15 : cs.h / 10);
 //tile size rectangle for overlays
 const tileShape = new Rectangle(0, tileSize, tileSize);
-//loadstarted tracker assists with loading
-let loadStarted = false;
 
 //ASSET LOADING
 //font
@@ -51,7 +49,22 @@ pixelFont.load().then((font) => {
 const images = {
   moles: {
     marshall: {
-      body: new Sprite(tk.generateImage("Assets/Moles/Marshall/body.png"), 1, 0, 0, 0, 200, 200, false, false, 32, 32)
+      body: new Sprite(tk.generateImage("Assets/Moles/Marshall/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
+    },
+    minnie: {
+      body: new Sprite(tk.generateImage("Assets/Moles/Minnie/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
+    },
+    maxwell: {
+      body: new Sprite(tk.generateImage("Assets/Moles/Maxwell/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
+    },
+    madeline: {
+      body: new Sprite(tk.generateImage("Assets/Moles/Madeline/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
+    },
+    magnolia: {
+      body: new Sprite(tk.generateImage("Assets/Moles/Magnolia/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
+    },
+    Michael: {
+      body: new Sprite(tk.generateImage("Assets/Moles/Michael/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
     }
   },
   tilesets: {
@@ -165,13 +178,16 @@ const dialogController = {
 }
 //tileschema for dialog boxes of different entities
 const entityTS = {
-  player: new TileScheme(hrt, new Fill("#1da7a9", 1), new Border("#199092", 1, 3, "bevel"), new Border("#22bbbd", 1, 3, "bevel"), new Fill("#000000", 1)),
-  enemy: new TileScheme(hrt, new Fill("#a91d1d", 1), new Border("#921919", 1, 3, "bevel"), new Border("#bd2222", 1, 3, "bevel"), new Fill("#000000", 1)),
-  npc: new TileScheme(hrt, new Fill("#3ba91d", 1), new Border("#259219", 1, 3, "bevel"), new Border("#32bd22", 1, 3, "bevel"), new Fill("#000000", 1)),
-  nme: new TileScheme(hrt, new Fill("#a4a4a4", 1), new Border("#949494", 1, 3, "bevel"), new Border("#cfcfcf", 1, 3, "bevel"), new Fill("#000000", 1))
+  player: new TileScheme(hrt, new Fill("#1da7a9", 1), new Border("#199092", 1, 5, "bevel"), new Border("#22bbbd", 1, 3, "bevel"), new Fill("#000000", 1)),
+  enemy: new TileScheme(hrt, new Fill("#a91d1d", 1), new Border("#921919", 1, 5, "bevel"), new Border("#bd2222", 1, 3, "bevel"), new Fill("#000000", 1)),
+  npc: new TileScheme(hrt, new Fill("#3ba91d", 1), new Border("#259219", 1, 5, "bevel"), new Border("#32bd22", 1, 3, "bevel"), new Fill("#000000", 1)),
+  nme: new TileScheme(hrt, new Fill("#a4a4a4", 1), new Border("#949494", 1, 5, "bevel"), new Border("#cfcfcf", 1, 3, "bevel"), new Fill("#000000", 1))
 };
 //debug options
 const debug = {
+  clearDialog: () => {
+    dialogController.queued = [];
+  },
   revealAll: () => {
     //reveal all tiles
     for(let ti = 0; ti < 2500; ti++) {

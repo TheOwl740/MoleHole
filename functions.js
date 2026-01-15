@@ -5,20 +5,16 @@ function updateHomescreen() {
   //canvas clear
   cs.fillAll(new Fill("#783b0d", 1));
   //update mole animation
-  if(player === null) {
-    player = new Player(new Pair(cs.w / 2, cs.h / -2))
-  }
+  let tempPlayer = new Player(new Pair(cs.w / 2, cs.h / -2));
+  [tempPlayer.sprites.body.w, tempPlayer.sprites.body.h] = [tileSize * 3, tileSize * 3]; 
   //rendering
   rt.renderCircle(new Pair(cs.w / 2, cs.h / -2), new Circle(((landscape ? cs.w : cs.h) / 2) * (((Math.sin(ec / 50) + 1) / 8) + 1)), new Fill("#301f04", (Math.sin(ec / 50) + 2) / 4), null);
   rt.renderCircle(new Pair(cs.w / 2, cs.h / -2), new Circle(((landscape ? cs.w : cs.h) / 3) * (((Math.sin(ec / 25) + 1) / 8) + 1)), new Fill("#301f04", (Math.sin(ec / 25) + 2) / 4), null);
-  player.render();
-  rt.renderText(new Pair(cs.w / 2, cs.h / -3), new TextNode("pixelFont", "MoleHole", 0, landscape ? cs.w / 40 : cs.h / 20, "center"), new Fill("#EEEEFF", 1));
-  rt.renderText(new Pair(cs.w / 2, (cs.h / -1.5) - (landscape ? cs.w / 40 : cs.h / 30)), new TextNode("pixelFont", `- ${landscape ? "click" : "tap"} anywhere to begin -`, 0, landscape ? cs.w / 80 : cs.h / 40, "center"), new Fill("#EEEEFF", 1));
+  tempPlayer.render();
+  rt.renderText(new Pair(cs.w / 2, cs.h / -3), new TextNode("pixelFont", "MoleHole", 0, landscape ? cs.w / 30 : cs.h / 20, "center"), new Fill("#EEEEFF", 1));
+  rt.renderText(new Pair(cs.w / 2, (cs.h / -1.5) - (landscape ? cs.w / 40 : cs.h / 30)), new TextNode("pixelFont", `- ${landscape ? "click" : "tap"} anywhere to begin -`, 0, landscape ? cs.w / 50 : cs.h / 30, "center"), new Fill("#EEEEFF", 1));
   //game start
   if(et.getClick("left") && bc.ready()) {
-    [images.moles.marshall.body.w, images.moles.marshall.body.h] = [tileSize, tileSize];
-    images.moles.marshall.body.y = tileSize / 3;
-    player = new Player(null);
     loadLevel(0);
   }
 }
@@ -54,7 +50,7 @@ function loadLevel(levelId) {
   //instantiate pathfinding controller on new level
   currentPC = new PathfindingController(currentLevel.map, true);
   //apply start transform to player
-  player.transform = currentLevel.playerSpawn.duplicate();
+  player = new Player(currentLevel.playerSpawn.duplicate());
   updateTERelationship(null, player, currentLevel.getTile(currentLevel.playerSpawn));
   player.movePath = null;
   //initialize turn controller data
@@ -73,7 +69,7 @@ function renderHealthbar(targetObj, yOffset) {
   rt.renderRectangle(targetObj.transform.duplicate().add(new Pair(0, yOffset)), new Rectangle(0, tileSize * 0.75, tileSize * 0.2), new Fill("#d60000", 0.5), null);
   rt.renderRectangle(targetObj.transform.duplicate().add(new Pair(0, yOffset)), new Rectangle(0, tileSize * 0.7 * (targetObj.health.current / targetObj.health.max), tileSize * 0.175), new Fill("#16d700", 0.5), null)
 }
-//renders hud overlay
+//renders and updates hud overlay
 function updateHUD() {
   //health bar
   rt.renderRectangle(new Pair(cs.w / 8, cs.h / -32).add(rt.camera), new Rectangle(0, cs.w / 4, cs.h / 16), new Fill("#d60000", 0.5), null);
@@ -89,14 +85,20 @@ function updateHUD() {
     rt.renderText(buttonData.stopWait.transform().add(rt.camera), new TextNode("pixelFont", "z", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#8500d2", 1));
   } else {
     rt.renderText(buttonData.stopWait.transform().add(rt.camera), new TextNode("pixelFont", "x", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#d21c1c", 1));
+    //cancel move operation
+    if(et.getKey("x") || (tk.detectCollision(et.cursor, buttonData.stopWait.collider()) && (landscape ? et.getClick("left") : tapData.realClick))) {
+      player.targetIndex = null;
+      player.movePath = null;
+    }
   }
   //skill tree button
   rt.renderRectangle(buttonData.skillTree.transform().add(rt.camera), buttonData.skillTree.shape, new Fill("#82846e", 0.5), null);
   rt.renderText(buttonData.skillTree.transform().add(rt.camera), new TextNode("pixelFont", "+", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#c4b921", 1));
   //skill tree access
-  if((et.getKey("q") || (tk.detectCollision(et.cursor, buttonData.skillTree.collider()) && (landscape ? et.getClick("left") : tapData.realClick))) && bc.ready()) {
+  if(et.getKey("q") || (tk.detectCollision(et.cursor, buttonData.skillTree.collider()) && (landscape ? et.getClick("left") : tapData.realClick))) {
     gameState = "skillTree";
   }
+  
   //update dialogs
   dialogController.update();
 }

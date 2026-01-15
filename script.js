@@ -22,7 +22,6 @@ function update() {
       currentLevel.update();
       currentLevel.render();
       player.render();
-      player.updateAux();
       currentEC.update();
       updateHUD();
       break;

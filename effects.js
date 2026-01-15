@@ -66,19 +66,6 @@ class SPEffect extends Effect {
     rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", `+${this.pointCount} Skill Point${this.pointCount > 1 ? "s" : ""}!`, 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#c4b921", this.remainingDuration / 120));
   }
 }
-//cube death subclass
-class CubeDeath extends Effect {
-  constructor(cube) {
-    super(60, cube.transform);
-    this.cube = cube;
-  }
-  update() {
-    this.remainingDuration--;
-    if(this.cube.tile.visible) {
-      rt.renderRectangle(this.transform, new Rectangle(0, this.cube.shape.w * (this.remainingDuration / 60), this.cube.shape.h * (this.remainingDuration / 60)), new Fill(this.cube.fill.color, this.remainingDuration / 60), null);
-    }
-  }
-}
 class NewLevelEffect extends Effect {
   constructor() {
     super(300, new Pair(cs.w / 2, cs.h / -2).add(rt.camera))
@@ -89,12 +76,12 @@ class NewLevelEffect extends Effect {
       if(currentLevel.levelId !== 0) {
         rt.renderText(this.transform, new TextNode("pixelFont", `-Floor ${currentLevel.levelId}-`, 0, (cs.w / 10) * (this.remainingDuration / 150), "center"), new Fill("#FFFFFF", 1));
       }
-      rt.renderText(this.transform.duplicate().subtract(new Pair(0, landscape ? cs.w / 10 : cs.h / 10)), new TextNode("pixelFont", currentLevel.zone, 0, (cs.w / 15) * (this.remainingDuration / 150), "center"), new Fill("#FFFFFF", 1));
+      rt.renderText(this.transform.duplicate().add(new Pair(0, landscape ? cs.w / 10 : cs.h / 10)), new TextNode("pixelFont", currentLevel.zone, 0, (cs.w / 15) * (this.remainingDuration / 150), "center"), new Fill("#FFFFFF", 1));
     } else {
       if(currentLevel.levelId !== 0) {
         rt.renderText(this.transform, new TextNode("pixelFont", `-Level ${currentLevel.levelId}-`, 0, cs.w / 10, "center"), new Fill("#FFFFFF", this.remainingDuration / 150));
       }
-      rt.renderText(this.transform.duplicate().subtract(new Pair(0, landscape ? cs.w / 10 : cs.h / 10)), new TextNode("pixelFont", currentLevel.zone, 0, (cs.w / 15), "center"), new Fill("#FFFFFF", this.remainingDuration / 150));
+      rt.renderText(this.transform.duplicate().add(new Pair(0, landscape ? cs.w / 10 : cs.h / 10)), new TextNode("pixelFont", currentLevel.zone, 0, (cs.w / 15), "center"), new Fill("#FFFFFF", this.remainingDuration / 150));
     }
   }
 }
@@ -132,11 +119,10 @@ class Dialog {
         this.tileScheme = entityTS.nme;
         break;
     }
-    this.dialogBox = new Textbox(this.tileScheme, new Pair(cs.w / 2, cs.h * -0.85), new Pair(cs.w * 0.9, cs.h * 0.2), new TextNode("pixelFont", this.text, 0, landscape ? cs.w / 60 : cs.h / 30, "left"));
-    this.pfpBox = new BlankTile(this.tileScheme, new Pair(tileSize, cs.h * -0.65), new Pair(tileSize * 1.2, tileSize * 1.2));
+    this.dialogBox = new Textbox(this.tileScheme, new Pair(cs.w / 2, cs.h * -0.85), new Pair(cs.w - tileSize, cs.h * 0.2), new TextNode("pixelFont", this.text, 0, landscape ? cs.w / 50 : cs.h / 30, "left"));
+    this.pfpBox = new BlankTile(this.tileScheme, new Pair(tileSize * 1.1, cs.h * -0.65), new Pair(tileSize * 1.2, tileSize * 1.2));
   }
   render() {
-    console.log(this.dialogBox.textLines[0])
     this.dialogBox.render();
     this.pfpBox.render();
     hrt.renderImage(tk.pairMath(this.pfpBox.transform, new Pair(0, tileSize / 3), "subtract"), this.entity.sprites.body);
