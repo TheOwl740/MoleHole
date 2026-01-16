@@ -307,11 +307,16 @@ class Level {
     }
     //set player spawn
     if(this.levelId === 0) {
-      //find marshall's room and place minnie and marshall there
+      //place npcs
       for(let room = 0; room < activeRooms.length; room++) {
         if(activeRooms[room].id === "marshallsRoom") {
           this.playerSpawn = this.getIndex(new Pair(activeIndices[room].y + 5, activeIndices[room].x - 1)).transform.duplicate();
           this.npcs.push(new Minnie(this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 1)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 1))))
+        }
+        if(activeRooms[room].id === "pitRoom") {
+          this.npcs.push(new Michael(this.getIndex(new Pair(activeIndices[room].y + 4, activeIndices[room].x - 2)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 4, activeIndices[room].x - 2))))
+          this.npcs.push(new Maxwell(this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 4)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 4))))
+          this.npcs.push(new Magnolia(this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 2)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 2))))
         }
       }
     }
@@ -373,17 +378,18 @@ class Level {
     const retList = [];
     //get entities that can't be walked on
     if(client.type !== "level") {
-      if(client.type === "enemy" || client.type === "npc") {
-        this.enemies.forEach((enemy) => {
-          if(!enemy.tile.index.isEqualTo(client.tile.index)) {
-            retList.push(enemy.tile.index.duplicate());
-          }
-        });
-        this.npcs.forEach((npc) => {
-          if(!npc.tile.index.isEqualTo(client.tile.index)) {
-            retList.push(npc.tile.index.duplicate());
-          }
-        });
+      this.enemies.forEach((enemy) => {
+        if(!(enemy.tile.index.isEqualTo(client.tile.index) || enemy.tile.index.isEqualTo(client.targetIndex))) {
+          retList.push(enemy.tile.index.duplicate());
+        }
+      });
+      this.npcs.forEach((npc) => {
+        if(!(npc.tile.index.isEqualTo(client.tile.index) || npc.tile.index.isEqualTo(client.targetIndex))) {
+          retList.push(npc.tile.index.duplicate());
+        }
+      });
+      if(!(client.type === "player" || player.tile.index.isEqualTo(client.targetIndex))) {
+        retList.push(player.tile.index.duplicate());
       }
     }
     //get walls

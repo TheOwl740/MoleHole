@@ -87,13 +87,13 @@ class NewLevelEffect extends Effect {
 }
 class WaitEffect extends Effect {
   constructor(waitAction) {
-    super(100, waitAction.actor.transform);
+    super(100, waitAction.actor.transform.duplicate().add(new Pair(0, tileSize / 3)));
     this.actor = waitAction.actor;
   }
   update() {
     this.remainingDuration--;
     if(this.actor.tile.visible) {
-      rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "z", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#8500d2", this.remainingDuration / 100));
+      rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "...", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#8500d2", this.remainingDuration / 100));
     }
   }
 }

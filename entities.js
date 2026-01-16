@@ -54,7 +54,7 @@ class Player {
     }
     //creates a tile entity relationship if placed in the context of a level
     if(currentLevel !== null) {
-      updateTERelationship(null, this, currentLevel.getTile(transform))
+      updateTERelationship(null, this, currentLevel.getTile(transform));
     }
   }
   render() {
@@ -242,6 +242,7 @@ class NPC {
     //location data
     this.transform = transform;
     this.tile = tile;
+    this.parentLevel = tile.parentLevel;
     //assign tile
     updateTERelationship(null, this, this.tile);
     //sprite data
@@ -390,10 +391,60 @@ class NPC {
   }
   //updates the path to the current target
   updatePath() {
-    this.path = currentPC.pathfind(this.tile.index, this.targetIndex, currentLevel.getNonWalkables(this), 2000);
+    this.path = currentPC.pathfind(this.tile.index, this.targetIndex, this.parentLevel.getNonWalkables(this), 2000);
   }
 }
-
+class Michael extends NPC {
+  constructor(transform, tile) {
+    super(transform, tile, images.moles.michael);
+    this.type = "michael mole";
+    //time elapsed by one tile movement
+    this.moveTime = 1;
+    //weapon slot
+    this.weapon = null;
+    //run turn before marshall
+    this.nextTurn = 0.1;
+    //health data
+    this.health = {
+      current: 10,
+      max: 10,
+      regenTime: 0,
+      regenMax: 0,
+      regenPoints: 0
+    };
+    //base melee data
+    this.melee = {
+      time: 1,
+      damage: 1
+    };
+  }
+  //custom interactions
+  getInteraction() {
+    
+  }
+  runTurn() {
+    switch(this.parentLevel.tutorialStage) {
+      case 3:
+        if(tk.pairMath(this.tile.index, player.tile.index, "distance") < 3) {
+          dialogController.queued.push(new Dialog(this, "Hello Marshall! I'm happy to see that you are finally up."));
+          dialogController.queued.push(new Dialog(this, "I am sure you certainly had quite the adventure last night."));
+          dialogController.queued.push(new Dialog(player, "*What does he mean? Last night I was up trying to beat my personal record on Molesweeper.*"));
+          dialogController.queued.push(new Dialog(player, "What I was doing last night?"));
+          dialogController.queued.push(new Dialog(this, "Yes, what were you doing last night Marshall?"));
+          dialogController.queued.push(new Dialog(this, "I certainly hope it doesn't involve stealing rations from the family..."));
+          dialogController.queued.push(new Dialog(player, "Stealing? Why would I steal the rations?"));
+          dialogController.queued.push(new Dialog(this, "We all know you are a growing boy Marshall!"));
+          dialogController.queued.push(new Dialog(this, "Are you sure you weren't a little hungry after dinner and decided to take a little more?"));
+          dialogController.queued.push(new Dialog(player, "Of course not, I would never."));
+          dialogController.queued.push(new Dialog(this, "I certainly hope not. You know what happens to those who steal rations..."));
+          this.parentLevel.tutorialStage++;
+        }
+        return new Wait(this);
+      default:
+        return new Wait(this);
+    }
+  }
+}
 class Minnie extends NPC {
   constructor(transform, tile) {
     super(transform, tile, images.moles.minnie);
@@ -418,47 +469,102 @@ class Minnie extends NPC {
       damage: 1
     };
     //pit room index for nav
-    this.pitRoomIndex = null;
+    for(let i = 0; i < 50; i++) {
+      for(let ii = 0; ii < 50; ii++) {
+        if(this.parentLevel.getIndex(new Pair(i, ii)).overlay?.overlayType === "couchLeft") {
+          this.pitRoomIndex = new Pair(i, ii);
+        }
+      }
+    }
   }
   //custom interactions
   getInteraction() {
-    switch(currentLevel.tutorialStage) {
+    switch(this.parentLevel.tutorialStage) {
       case 1:
         dialogController.queued.push(new Dialog(this, "Dad has asked me to wake you for an emergency family meeting."));
         dialogController.queued.push(new Dialog(this, "Get ready and meet us in the family mole room. QUICK!"));
         dialogController.queued.push(new Dialog(player, "*Click on tiles to explore. Try to find the family room!*"));
-        currentLevel.tutorialStage++;
+        this.parentLevel.tutorialStage++;
     }
   }
   runTurn() {
-    switch(currentLevel.tutorialStage) {
+    switch(this.parentLevel.tutorialStage) {
       case 0:
         dialogController.queued.push(new Dialog(this, "... marshall... MARSHALL!"));
         dialogController.queued.push(new Dialog(player, "... Nnnggh... Huh?"));
         dialogController.queued.push(new Dialog(this, "Marshall, you need to get out of bed quickly!"));
         dialogController.queued.push(new Dialog(player, "*Click on Minnie to go talk to her*"));
-        currentLevel.tutorialStage++;
+        this.parentLevel.tutorialStage++;
         return new Wait(this);
       case 2:
-        if(!this.pitRoomIndex) {
-          for(let i = 0; i < 50; i++) {
-            for(let ii = 0; ii < 50; ii++) {
-              if(currentLevel.getIndex(new Pair(i, ii)).overlay?.overlayType === "couchLeft") {
-                this.pitRoomIndex = new Pair(i, ii);
-              }
-            }
-          }
-        }
         this.targetIndex = this.pitRoomIndex;
         this.updatePath();
         if(this.tile.index.isEqualTo(this.targetIndex)) {
-          currentLevel.tutorialStage++;
-        } else {
-          return new Movement(this, currentLevel.getIndex(this.path[0]));        
+          this.parentLevel.tutorialStage++;
+        } else if(this.path) {
+          return new Movement(this, this.parentLevel.getIndex(this.path[0]));        
         }
       default:
         return new Wait(this);
     }
+  }
+}
+class Maxwell extends NPC {
+  constructor(transform, tile) {
+    super(transform, tile, images.moles.maxwell);
+    this.type = "maxwell mole";
+    //time elapsed by one tile movement
+    this.moveTime = 1;
+    //weapon slot
+    this.weapon = null;
+    //run turn before marshall
+    this.nextTurn = 0.2;
+    //health data
+    this.health = {
+      current: 10,
+      max: 10,
+      regenTime: 0,
+      regenMax: 0,
+      regenPoints: 0
+    };
+    //base melee data
+    this.melee = {
+      time: 1,
+      damage: 1
+    };
+  }
+  runTurn() {
+    return new Wait(this);
+  }
+}
+class Magnolia extends NPC {
+  constructor(transform, tile) {
+    super(transform, tile, images.moles.magnolia);
+    this.type = "magnolia mole";
+    //time elapsed by one tile movement
+    this.moveTime = 1;
+    //weapon slot
+    this.weapon = null;
+    //run turn before marshall
+    this.nextTurn = 0.3;
+    //faces her husband
+    this.leftFacing = false;
+    //health data
+    this.health = {
+      current: 10,
+      max: 10,
+      regenTime: 0,
+      regenMax: 0,
+      regenPoints: 0
+    };
+    //base melee data
+    this.melee = {
+      time: 1,
+      damage: 1
+    };
+  }
+  runTurn() {
+    return new Wait(this);
   }
 }
 
@@ -474,6 +580,7 @@ class Enemy {
     //location data
     this.transform = transform;
     this.tile = tile;
+    this.parentLevel = tile.parentLevel;
     //assign tile
     updateTERelationship(null, this, this.tile);
     //sprite data
@@ -631,14 +738,14 @@ class Enemy {
         return new Wait(this);
       case "wandering":
         //open attack if close; will run to next switch
-        if(heuristicToPlayer <= currentLevel.visionRange && this.playerLock) {
+        if(heuristicToPlayer <= this.parentLevel.visionRange && this.playerLock) {
           this.state = "attacking";
           this.targetIndex = null;
           this.path = null;
         } else {          
           //attempt to choose new location if no target
           if(this.targetIndex === null) {
-            let newTarget = currentLevel.getIndex(new Pair(this.tile.index.x + tk.randomNum(-10, 10), this.tile.index.y + tk.randomNum(-10, 10)));
+            let newTarget = this.parentLevel.getIndex(new Pair(this.tile.index.x + tk.randomNum(-10, 10), this.tile.index.y + tk.randomNum(-10, 10)));
             //if valid target selected, assign
             if(newTarget !== null && newTarget.type === "floor") {
               this.targetIndex = newTarget.index;
@@ -660,14 +767,14 @@ class Enemy {
               return null;
             }         
             //move if target and path valid
-            return new Movement(this, currentLevel.getIndex(this.path[0]));
+            return new Movement(this, this.parentLevel.getIndex(this.path[0]));
           }
         }
         //return null if state change to attack and as backup
         return null;
       case "attacking":
         //wait and reset if target out of range
-        if(heuristicToPlayer > currentLevel.visionRange || !this.playerLock) {
+        if(heuristicToPlayer > this.parentLevel.visionRange || !this.playerLock) {
           this.state = "chasing";
           this.targetIndex = player.lastPosition;
           this.updatePath();
@@ -686,7 +793,7 @@ class Enemy {
             return new Melee(this, player);
           //move closer otherwise
           } else {
-            return new Movement(this, currentLevel.getIndex(this.path[0]));
+            return new Movement(this, this.parentLevel.getIndex(this.path[0]));
           }
         }
       case "chasing":
@@ -695,7 +802,7 @@ class Enemy {
           this.targetIndex = null;
           this.path = null;
           return new Wait(this);
-        } else if(heuristicToPlayer <= currentLevel.visionRange && this.playerLock) {
+        } else if(heuristicToPlayer <= this.parentLevel.visionRange && this.playerLock) {
           this.state = "attacking";
           this.targetIndex = null;
           this.path = null;
@@ -712,7 +819,7 @@ class Enemy {
             this.targetIndex = null;
             return new Wait(this);
           } 
-          return new Movement(this, currentLevel.getIndex(this.path[0]));
+          return new Movement(this, this.parentLevel.getIndex(this.path[0]));
         }
     }
     //backup return
@@ -720,7 +827,7 @@ class Enemy {
   }
   //updates the path to the current target
   updatePath() {
-    this.path = currentPC.pathfind(this.tile.index, this.targetIndex, currentLevel.getNonWalkables(this), 2000);
+    this.path = currentPC.pathfind(this.tile.index, this.targetIndex, this.parentLevel.getNonWalkables(this), 2000);
   }
 }
 //wiggly worm

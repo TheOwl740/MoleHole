@@ -63,7 +63,7 @@ const images = {
     magnolia: {
       body: new Sprite(tk.generateImage("Assets/Moles/Magnolia/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
     },
-    Michael: {
+    michael: {
       body: new Sprite(tk.generateImage("Assets/Moles/Michael/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
     }
   },
