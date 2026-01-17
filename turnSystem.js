@@ -115,7 +115,7 @@ class Movement extends Action {
   constructor(actor, targetTile) {
     super(actor, actor.moveTime);
     this.type = "movement";
-    [this.duration, this.remainingDuration] = [15, 15];
+    [this.duration, this.remainingDuration] = [10, 10];
     //tile being moved to
     this.targetTile = targetTile;
     //distance to move each frame
@@ -202,7 +202,7 @@ class Wait extends Action {
   constructor(actor) {
     super(actor, 1);
     this.type = "wait";
-    [this.duration, this.remainingDuration] = [15, 15];
+    [this.duration, this.remainingDuration] = [1, 1];
   }
   update() {
     currentEC.add(new WaitEffect(this));
@@ -226,7 +226,7 @@ class Shove extends Action {
   constructor(actor, targetEntity) {
     super(actor, actor.melee.time);
     this.type = "shove";
-    [this.duration, this.remainingDuration] = [15, 15];
+    [this.duration, this.remainingDuration] = [20, 20];
     //target being shoved
     this.targetEntity = targetEntity;
     //rotational direction of the attack
@@ -239,13 +239,16 @@ class Shove extends Action {
   update() {
     //on start
     if(this.remainingDuration === this.duration) {
+      this.targetEntity.targetIndex = null;
+      this.targetEntity.path = null;
       this.actor.animation.state = "attack";
+      this.actor.animation.frame = 0;
       if(this.actor.transform.x !== this.targetTile.transform.x) {
         this.actor.leftFacing = this.actor.transform.x > this.targetTile.transform.x;
       }
     }
     //during animation
-    if(this.remainingDuration > this.duration / 2 || this.targetTile.type !== "wall") {
+    if(this.remainingDuration > this.duration / 2 || (this.targetTile.type === "floor" && this.targetTile.walkable && this.targetTile.entity === null) || this.targetTile.type === "pit") {
       this.targetEntity.transform.add(tk.calcRotationalTranslate(this.attackDirection, this.stepLength));
     } else {
       this.targetEntity.transform.subtract(tk.calcRotationalTranslate(this.attackDirection, this.stepLength));
@@ -255,21 +258,26 @@ class Shove extends Action {
       //reset animation
       this.actor.animation.state = "idle";
       //set new position
-      if(this.targetTile.type !== "wall") {
+      if((this.targetTile.type === "floor" && this.targetTile.walkable && this.targetTile.entity === null) || this.targetTile.type === "pit") {
         this.targetEntity.transform = this.targetTile.transform.duplicate();
         updateTERelationship(this.targetEntity.tile, this.targetEntity, this.targetTile);
       }
       //do fall animation if applicable
-      currentTC.currentAction = new Fall(this.targetEntity);
+      if(this.targetTile.type === "pit") {
+        currentTC.currentAction = new Fall(this.targetEntity);
+      }
     }
   }
   complete() {
     if(this.actor.transform.x !== this.targetTile.transform.x) {
       this.actor.leftFacing = this.actor.transform.x > this.targetTile.transform.x;
     }
-    if(this.targetTile.type === "floor") {
+    if(this.targetTile.type === "floor" && this.targetTile.walkable && this.targetTile.entity === null) {
       this.targetEntity.transform = this.targetTile.transform.duplicate();
       updateTERelationship(this.targetEntity.tile, this.targetEntity, this.targetTile);
+    }
+    if(this.targetTile.type === "pit") {
+      currentTC.currentAction = new Fall(this.targetEntity);
     }
   }
 }
@@ -277,7 +285,7 @@ class Fall extends Action {
   constructor(actor) {
     super(actor, 0);
     this.type = "fall";
-    [this.duration, this.remainingDuration] = [30, 30];
+    [this.duration, this.remainingDuration] = [50, 51];
     //saves the sprite of an actor before modding it
     this.savedSprite;
   }
@@ -285,7 +293,7 @@ class Fall extends Action {
     //on start
     if(this.remainingDuration === this.duration) {
       this.actor.animation.state = "jump";
-      this.savedSprite = actor.sprites.body.duplicate();
+      this.actor.sprites.body.y = tileSize / 12;
     }
     //during animation
     this.actor.sprites.body.w *= 0.9;

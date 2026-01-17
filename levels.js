@@ -316,20 +316,78 @@ class Level {
     }
     //stamp rooms and collect entrances and nonwalkables
     let entranceIndices = [];
+    let eiImmuted = [];
     let nonwalkableIndices = [];
     for(let room = 0; room < activeRooms.length; room++) {
       let stampObj = activeRooms[room].stamp(this, activeIndices[room]);
       nonwalkableIndices = nonwalkableIndices.concat(stampObj.nonwalkableIndices);
       entranceIndices = entranceIndices.concat(stampObj.entranceIndices);
+      eiImmuted = eiImmuted.concat(stampObj.entranceIndices);
     }
-    //carve corridors
+    //randomize entrance indices
+    for(let i = 0; i < 10; i++) {
+      entranceIndices.sort(() => {
+        return tk.randomNum(-1, 1);
+      });
+    }
+    //carve pathfinder
     let carvePather = new PathfindingController(this.map, false);
-    for(let e1 = 0; e1 < entranceIndices.length; e1++) {
-      for(let e2 = 0; e2 < entranceIndices.length; e2++) {
-        if(e1 !== e2) {
-          carvePather.pathfind(entranceIndices[e1], entranceIndices[e2], nonwalkableIndices, 5000).forEach((carveIndex) => {
-            this.map[carveIndex.x][carveIndex.y] = new Floor(this.getIndex(carveIndex).transform, carveIndex, this.tileset, this, null);
-          });
+    //corridor junction points
+    let junctionIndices = [];
+    //take care of 75% of entrances
+    while(entranceIndices.length > eiImmuted.length / 4) {
+      //pick random entrances to bond
+      let e1 = tk.randomNum(0, entranceIndices.length - 1);
+      let e2 = tk.randomNum(0, entranceIndices.length - 1);
+      if(e1 !== e2) {
+        //cut the start point manually
+        this.map[entranceIndices[e1].x][entranceIndices[e1].y] = new Floor(this.getIndex(entranceIndices[e1]).transform, entranceIndices[e1], this.tileset, this, null);
+        //generate path to carve through
+        let carvePath = carvePather.pathfind(entranceIndices[e1], entranceIndices[e2], nonwalkableIndices, 5000);
+        //iterate over each index to carve
+        for(let carveIndex = 0; carveIndex < carvePath.length; carveIndex++) {
+          //carve index
+          this.map[carvePath[carveIndex].x][carvePath[carveIndex].y] = new Floor(this.getIndex(carvePath[carveIndex]).transform, carvePath[carveIndex], this.tileset, this, null);
+          //create junctions at midpoint of each path
+          if(carveIndex === Math.floor(carvePath.length / 2)) {
+            junctionIndices.push(carvePath[carveIndex]);
+          }
+        }
+        //splice higher index first to avoid off by 1
+        entranceIndices.splice(e1 < e2 ? e2 : e1, 1);
+        entranceIndices.splice(e1 < e2 ? e1 : e2, 1);
+      }
+    }
+    //while loop ensures that all rooms are connected by getting remaining entrances paired with junctions
+    while(entranceIndices.length > 0) {
+      //cut the start point manually
+      this.map[entranceIndices[0].x][entranceIndices[0].y] = new Floor(this.getIndex(entranceIndices[0]).transform, entranceIndices[0], this.tileset, this, null);
+      //carve out remaining entrances to junctions
+      carvePather.pathfind(entranceIndices[0], junctionIndices[0], nonwalkableIndices, 5000).forEach((carveIndex) => {
+        this.map[carveIndex.x][carveIndex.y] = new Floor(this.getIndex(carveIndex).transform, carveIndex, this.tileset, this, null);
+      });
+      //cut out entrance and cycle junctions
+      entranceIndices.shift();
+      junctionIndices.push(junctionIndices.shift());
+    }
+    //final while loop checks all immuted entrances to make sure all rooms are connected, using junctions
+    let verified = false;
+    while(!verified) {
+      //join junction 0 and a random junction
+      carvePather.pathfind(junctionIndices[0], junctionIndices[tk.randomNum(1, junctionIndices.length - 1)], nonwalkableIndices, 5000).forEach((carveIndex) => {
+        this.map[carveIndex.x][carveIndex.y] = new Floor(this.getIndex(carveIndex).transform, carveIndex, this.tileset, this, null);
+      });
+      //cycle junction 0
+      junctionIndices.push(junctionIndices.shift());
+      //reassert verification
+      verified = true;
+      for(let e1 = 0; e1 < eiImmuted.length; e1++) {
+        for(let e2 = 0; e2 < eiImmuted.length; e2++) {
+          if(e1 !== e2) {
+            if(carvePather.pathfind(eiImmuted[e1], eiImmuted[e2], this.getNonWalkables(this), 5000) === null) {
+              verified = false;
+            }
+          }
         }
       }
     }
@@ -436,10 +494,10 @@ class Level {
         retList.push(player.tile.index.duplicate());
       }
     }
-    //get walls
+    //get walls, pits, and non revealed tiles
     for(let ct = 0; ct < 2500; ct++) {
       let tObj = this.map[Math.floor(ct / 50)][ct % 50];
-      if(!tObj.walkable) {
+      if((!tObj.walkable) || (client.type === "player" && !tObj.revealed)) {
         retList.push(tObj.index);
       }
     }
@@ -567,7 +625,7 @@ const tileMaps = [
     ['w','f','f','f','f','f','f','w'],
     ['w','f','f','f','f','p','p','w'],
     ['w','f','f','f','f','p','p','w'],
-    ['e','f','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','p','w'],
     ['w','e','w','w','w','w','w','w']
   ]),
   new Room(7, 5, "marshallsRoom", 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
@@ -662,7 +720,7 @@ const tileMaps = [
     ['w','f','f','f','w'],
     ['w','w','e','w','w'],
   ]),
-  new Room(5, 5, "entranceRoom", 2, [0], [
+  new Room(5, 5, "entranceRoom", 2, [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("web1"),
       index: new Pair(2, 2)

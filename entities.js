@@ -105,7 +105,7 @@ class Player {
     } else if(this.animation.state === "jump") {
       this.sprites.body.setActive(new Pair(1, 1));
     } else if(this.animation.state === "attack") {
-      if(this.animation.deltaTime > 0.2) {
+      if(this.animation.deltaTime > 0.1) {
         this.animation.deltaTime = 0;
         switch(this.animation.frame) {
           case 0:
@@ -120,9 +120,6 @@ class Player {
             this.animation.frame++;
             this.sprites.body.setActive(new Pair(1, 3));
             break;
-          case 3:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(0, 0));
         }
       } 
     }
@@ -346,27 +343,24 @@ class NPC {
       } else if(this.animation.state === "jump") {
         this.sprites.body.setActive(new Pair(1, 1));
       } else if(this.animation.state === "attack") {
-        if(this.animation.deltaTime > 0.2) {
-          this.animation.deltaTime = 0;
-          switch(this.animation.frame) {
-            case 0:
-              this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 0));
-              break;
-            case 1:
-              this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 3));
-              break;
-            case 2:
-              this.animation.frame++;
-              this.sprites.body.setActive(new Pair(1, 3));
-              break;
-            case 3:
-              this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 0));
-          }
-        } 
-      }
+      if(this.animation.deltaTime > 0.1) {
+        this.animation.deltaTime = 0;
+        switch(this.animation.frame) {
+          case 0:
+            this.animation.frame++;
+            this.sprites.body.setActive(new Pair(0, 0));
+            break;
+          case 1:
+            this.animation.frame++;
+            this.sprites.body.setActive(new Pair(0, 3));
+            break;
+          case 2:
+            this.animation.frame++;
+            this.sprites.body.setActive(new Pair(1, 3));
+            break;
+        }
+      } 
+    }
       //renders health bar
       if(this.health.current < this.health.max) {
         renderHealthbar(this, tileSize);
@@ -438,7 +432,6 @@ class Michael extends NPC {
           dialogController.queued.push(new Dialog(player, "Of course not, I would never."));
           dialogController.queued.push(new Dialog(this, "I certainly hope not. You know what happens to those who steal rations..."));
           this.parentLevel.tutorialStage++;
-          player.nextTurn++;
         }
         return new Wait(this);
       default:
@@ -455,7 +448,7 @@ class Minnie extends NPC {
     //weapon slot
     this.weapon = null;
     //run turn before marshall
-    this.nextTurn = -0.1;
+    this.nextTurn = -0.2;
     //health data
     this.health = {
       current: 10,
@@ -530,7 +523,7 @@ class Maxwell extends NPC {
     //weapon slot
     this.weapon = null;
     //run turn before marshall
-    this.nextTurn = 0.2;
+    this.nextTurn = -0.1;
     //health data
     this.health = {
       current: 10,
@@ -707,27 +700,24 @@ class Enemy {
       } else if(this.animation.state === "jump") {
         this.sprites.body.setActive(new Pair(1, 1));
       } else if(this.animation.state === "attack") {
-        if(this.animation.deltaTime > 0.2) {
-          this.animation.deltaTime = 0;
-          switch(this.animation.frame) {
-            case 0:
-              this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 0));
-              break;
-            case 1:
-              this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 3));
-              break;
-            case 2:
-              this.animation.frame++;
-              this.sprites.body.setActive(new Pair(1, 3));
-              break;
-            case 3:
-              this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 0));
-          }
-        } 
-      }
+      if(this.animation.deltaTime > 0.1) {
+        this.animation.deltaTime = 0;
+        switch(this.animation.frame) {
+          case 0:
+            this.animation.frame++;
+            this.sprites.body.setActive(new Pair(0, 0));
+            break;
+          case 1:
+            this.animation.frame++;
+            this.sprites.body.setActive(new Pair(0, 3));
+            break;
+          case 2:
+            this.animation.frame++;
+            this.sprites.body.setActive(new Pair(1, 3));
+            break;
+        }
+      } 
+    }
       //renders health bar
       if(this.health.current < this.health.max) {
         renderHealthbar(this, tileSize);
