@@ -82,6 +82,8 @@ class Pit extends Tile {
     this.sprite.setActive(new Pair(tk.randomNum(0, 1), 4));
     //boolean determining if a sprite should be rendered (below floor/wall)
     this.usingSprite = false;
+    //entity for fall handling
+    this.entity = null;
   }
   //custom render function because some pits don't have sprites
   render() {
@@ -185,12 +187,38 @@ class TileOverlay {
         this.sprite = images.overlays.moleHole.duplicate();
         this.sprite.setActive(new Pair(1, 5));
         break;
+      case "entrance":
+        this.sprite = images.overlays.buggyBurrows.duplicate();
+        this.sprite.setActive(new Pair(0, 0));
+        break;
+      case "exit":
+        this.sprite = images.overlays.buggyBurrows.duplicate();
+        this.sprite.setActive(new Pair(1, 0));
+        break;
+      case "web1":
+        this.sprite = images.overlays.buggyBurrows.duplicate();
+        this.sprite.setActive(new Pair(0, 1));
+        break;
+      case "web2":
+        this.sprite = images.overlays.buggyBurrows.duplicate();
+        this.sprite.setActive(new Pair(1, 1));
+        break;
+      case "web3":
+        this.sprite = images.overlays.buggyBurrows.duplicate();
+        this.sprite.setActive(new Pair(0, 2));
+        break;
+      case "web4":
+        this.sprite = images.overlays.buggyBurrows.duplicate();
+        this.sprite.setActive(new Pair(1, 2));
+        break;
+      default:
+        this.sprite = images.missingTexture.duplicate();
     }
   }
   attach(parentTile) {
     this.parentTile = parentTile;
     //designated walkable overlays
-    this.parentTile.walkable = ["couchLeft", "couchRight", "greenBedRight", "pinkBedRight", "orangeBedRight"].includes(this.overlayType);
+    this.parentTile.walkable = ["web1", "web2", "web3", "web4", "entrance", "exit", "couchLeft", "couchRight", "greenBedRight", "pinkBedRight", "orangeBedRight"].includes(this.overlayType);
   }
   render() {
     rt.renderImage(this.parentTile.transform, this.sprite);
@@ -217,16 +245,16 @@ class Level {
       this.zone = "The Mole Hill";
       this.tileset = images.tilesets.dirt;
       this.tutorialStage = 0;
-    } else if(this.levelId >= 4) {
+    } else if(this.levelId >= 0) {
       this.zone = "Buggy Burrows";
       this.tileset = images.tilesets.dirt;
-    } else if(this.levelId >= 8) {
+    } else if(this.levelId >= 4) {
       this.zone = "The Gnome Home";
       this.tileset = images.tilesets.dirt;
-    } else if(this.levelId >= 12) {
+    } else if(this.levelId >= 8) {
       this.zone = "Snakey Stronghold";
       this.tileset = images.tilesets.dirt;
-    } else if(this.levelId >= 16) {
+    } else if(this.levelId >= 12) {
       this.zone = "The Mustelid Mafia";
       this.tileset = images.tilesets.dirt;
     }
@@ -244,15 +272,25 @@ class Level {
     //first 5 required rooms
     while(activeRooms.length < 5) {
       currentSelection = tileMaps[tk.randomNum(0, tileMaps.length - 1)];
-      if((!activeIds.includes(currentSelection.id)) && (currentSelection.usableFloors === "all" || currentSelection.usableFloors.includes(this.levelId))) {
+      if((!activeIds.includes(currentSelection.id)) && !currentSelection.blockedFloors.includes(this.levelId)) {
         activeRooms.push(currentSelection);
         activeIds.push(currentSelection.id);
+      }
+    }
+    //entrance and exit rooms
+    if(this.levelId !== 0) {
+      while(!(activeIds.includes("entranceRoom") && activeIds.includes("exitRoom"))) {
+        currentSelection = tileMaps[tk.randomNum(0, tileMaps.length - 1)];
+        if((!activeIds.includes(currentSelection.id)) && !currentSelection.blockedFloors.includes(this.levelId)) {
+          activeRooms.push(currentSelection);
+          activeIds.push(currentSelection.id);
+        }
       }
     }
     //additional spawn attempts for later levels
     for(let spawnAttempt = 0; spawnAttempt < this.levelId; spawnAttempt++) {
       currentSelection = tileMaps[tk.randomNum(0, tileMaps.length - 1)];
-      if((!activeIds.includes(currentSelection.id)) && (currentSelection.usableFloors === "all" || currentSelection.usableFloors.includes(this.levelId))) {
+      if((!activeIds.includes(currentSelection.id)) && !currentSelection.blockedFloors.includes(this.levelId)) {
         activeRooms.push(currentSelection);
         activeIds.push(currentSelection.id);
       }
@@ -317,6 +355,12 @@ class Level {
           this.npcs.push(new Michael(this.getIndex(new Pair(activeIndices[room].y + 4, activeIndices[room].x - 2)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 4, activeIndices[room].x - 2))))
           this.npcs.push(new Maxwell(this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 4)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 4))))
           this.npcs.push(new Magnolia(this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 2)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 2))))
+        }
+      }
+    } else {
+      for(let room = 0; room < activeRooms.length; room++) {
+        if(activeRooms[room].id === "entranceRoom") {
+          this.playerSpawn = this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 2)).transform.duplicate();
         }
       }
     }
@@ -441,11 +485,11 @@ class Level {
 
 //room class for level stamping
 class Room {
-  constructor(w, h, id, entranceCount, usableFloors, tileOverlays, tileMap) {
+  constructor(w, h, id, entranceCount, blockedFloors, tileOverlays, tileMap) {
     [this.w, this.h] = [w, h];
     this.id = id;
     this.entranceCount = entranceCount;
-    this.usableFloors = usableFloors;
+    this.blockedFloors = blockedFloors;
     this.tileOverlays = tileOverlays;
     this.tileMap = tileMap;
   }
@@ -509,7 +553,7 @@ class Room {
 }
 
 const tileMaps = [
-  new Room(8, 6, "pitRoom", 2, [0], [
+  new Room(8, 6, "pitRoom", 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("couchLeft"),
       index: new Pair(2, 2)
@@ -519,14 +563,14 @@ const tileMaps = [
       index: new Pair(3, 2)
     }
   ], [
-    ['w','e','w','w','w','w','e','w'],
+    ['w','w','w','w','w','w','w','w'],
     ['w','f','f','f','f','f','f','w'],
     ['w','f','f','f','f','p','p','w'],
     ['w','f','f','f','f','p','p','w'],
-    ['w','f','f','f','f','f','f','w'],
-    ['w','e','w','w','w','w','e','w']
+    ['e','f','f','f','f','f','f','w'],
+    ['w','e','w','w','w','w','w','w']
   ]),
-  new Room(7, 5, "marshallsRoom", 1, [0], [
+  new Room(7, 5, "marshallsRoom", 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("greenBedLeft"),
       index: new Pair(4, 1)
@@ -546,7 +590,7 @@ const tileMaps = [
     ['e','f','f','f','f','f','e'],
     ['w','w','e','w','w','w','w']
   ]),
-  new Room(7, 5, "minniesRoom", 1, [0], [
+  new Room(7, 5, "minniesRoom", 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("pinkBedLeft"),
       index: new Pair(4, 1)
@@ -566,7 +610,7 @@ const tileMaps = [
     ['w','f','f','f','f','f','w'],
     ['w','w','e','w','w','e','w']
   ]),
-  new Room(7, 5, "maxwellsRoom", 1, [0], [
+  new Room(7, 5, "maxwellsRoom", 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("greenBedLeft"),
       index: new Pair(4, 1)
@@ -586,7 +630,7 @@ const tileMaps = [
     ['w','f','f','f','f','f','w'],
     ['w','e','w','w','w','e','w']
   ]),
-  new Room(7, 5, "parentsRoom", 1, [0], [
+  new Room(7, 5, "parentsRoom", 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("orangeBedLeft"),
       index: new Pair(4, 1)
@@ -605,5 +649,91 @@ const tileMaps = [
     ['w','f','f','f','f','f','w'],
     ['e','f','f','f','f','f','e'],
     ['w','w','w','e','w','w','w']
-  ])
+  ]),
+  new Room(5, 5, "entranceRoom", 2, [0, 1], [
+    {
+      overlay: new TileOverlay("entrance"),
+      index: new Pair(2, 2)
+    }
+  ], [
+    ['w','w','e','w','w'],
+    ['w','f','f','f','w'],
+    ['e','f','f','f','e'],
+    ['w','f','f','f','w'],
+    ['w','w','e','w','w'],
+  ]),
+  new Room(5, 5, "entranceRoom", 2, [0], [
+    {
+      overlay: new TileOverlay("web1"),
+      index: new Pair(2, 2)
+    }
+  ], [
+    ['w','w','e','w','w'],
+    ['w','f','f','f','w'],
+    ['e','f','f','f','e'],
+    ['w','f','f','f','w'],
+    ['w','w','e','w','w'],
+  ]),
+  new Room(5, 5, "exitRoom", 2, [0], [
+    {
+      overlay: new TileOverlay("exit"),
+      index: new Pair(2, 2)
+    }
+  ], [
+    ['w','w','e','w','w'],
+    ['w','f','f','f','w'],
+    ['e','f','f','f','e'],
+    ['w','f','f','f','w'],
+    ['w','w','e','w','w'],
+  ]),
+  new Room(5, 5, "smallEmpty", 2, [0], [],
+  [
+    ['w','w','e','w','w'],
+    ['w','f','f','f','w'],
+    ['e','f','f','f','e'],
+    ['w','f','f','f','w'],
+    ['w','w','e','w','w'],
+  ]),
+  new Room(7, 7, "mediumEmpty", 4, [0], [],
+  [
+    ['w','w','w','e','w','w','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','e'],
+    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','w','w','e','w','w','w'],
+  ]),
+  new Room(7, 7, "largeEmpty", 5, [0], [],
+  [
+    ['w','w','e','w','e','w','e','w','w'],
+    ['w','f','f','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','f','f','e'],
+    ['w','f','f','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','f','f','e'],
+    ['w','f','f','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','f','f','e'],
+    ['w','f','f','f','f','f','f','f','w'],
+    ['w','w','e','w','e','w','e','w','w'],
+  ]),
+  new Room(7, 7, "4wayJunction", 4, [0], [],
+  [
+    ['w','w','w','e','w','w','w'],
+    ['w','w','f','f','f','w','w'],
+    ['w','f','f','w','f','f','w'],
+    ['e','f','w','w','w','f','e'],
+    ['w','f','f','w','f','f','w'],
+    ['w','w','f','f','f','w','w'],
+    ['w','w','w','e','w','w','w'],
+  ]),
+  new Room(7, 7, "2wayJunction", 2, [0], [],
+  [
+    ['w','w','w','w','w','w','w'],
+    ['w','w','f','w','f','w','w'],
+    ['w','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','e'],
+    ['w','f','f','f','f','f','w'],
+    ['w','w','f','w','f','w','w'],
+    ['w','w','w','w','w','w','w'],
+  ]),
 ]

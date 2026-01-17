@@ -15,7 +15,7 @@ cs.cx.imageSmoothingEnabled = false;
 et.tabEnabled = false;
 et.rightClickEnabled = false;
 
-//GENERAL GLOBAL VARIABLES
+//GLOBAL VARIABLES
 //freecam mode bool
 let freecam = true;
 //epoch counter (ticks since game start)
@@ -47,6 +47,7 @@ pixelFont.load().then((font) => {
 });
 //images
 const images = {
+  missingTexture: new Img(tk.generateImage("Assets/missingTexture.png"), 1, 0, 0, 0, tileSize, tileSize, false, false),
   moles: {
     marshall: {
       body: new Sprite(tk.generateImage("Assets/Moles/Marshall/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
@@ -71,11 +72,16 @@ const images = {
     dirt: new Sprite(tk.generateImage("Assets/Tilesets/dirt.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32)
   },
   overlays: {
-    moleHole: new Sprite(tk.generateImage("Assets/Overlays/moleHole.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32)
+    moleHole: new Sprite(tk.generateImage("Assets/Overlays/moleHole.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32),
+    buggyBurrows: new Sprite(tk.generateImage("Assets/Overlays/buggyBurrows.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32)
   }
 }
 
-//GAME OBJECTS
+//GLOBAL ARRAYS
+//stores loaded levels
+const levels = [];
+
+//GLOBAL OBJECTS
 //mobile drag controller
 const tapData = {
   holdTime: 0,

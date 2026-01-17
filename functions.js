@@ -45,8 +45,16 @@ function loadLevel(levelId) {
   currentEC = new EffectController();
   //create new turn controller
   currentTC = new TurnController();
-  //instantiate and generate new level
-  currentLevel = new Level(levelId);
+  //store past level
+  if(currentLevel) {
+    levels[currentLevel.levelId] = currentLevel;
+  }
+  //generate new level or return to old
+  if(levels.length > levelId) {
+    currentLevel = levels[levelId];
+  } else {
+    currentLevel = new Level(levelId);
+  }
   //instantiate pathfinding controller on new level
   currentPC = new PathfindingController(currentLevel.map, true);
   //apply start transform to player

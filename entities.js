@@ -425,7 +425,7 @@ class Michael extends NPC {
   runTurn() {
     switch(this.parentLevel.tutorialStage) {
       case 3:
-        if(tk.pairMath(this.tile.index, player.tile.index, "distance") < 3) {
+        if(this.tile.index.isEqualTo(tk.pairMath(player.tile.index, new Pair(0, 1), "add"))) {
           dialogController.queued.push(new Dialog(this, "Hello Marshall! I'm happy to see that you are finally up."));
           dialogController.queued.push(new Dialog(this, "I am sure you certainly had quite the adventure last night."));
           dialogController.queued.push(new Dialog(player, "*What does he mean? Last night I was up trying to beat my personal record on Molesweeper.*"));
@@ -438,6 +438,7 @@ class Michael extends NPC {
           dialogController.queued.push(new Dialog(player, "Of course not, I would never."));
           dialogController.queued.push(new Dialog(this, "I certainly hope not. You know what happens to those who steal rations..."));
           this.parentLevel.tutorialStage++;
+          player.nextTurn++;
         }
         return new Wait(this);
       default:
@@ -499,8 +500,19 @@ class Minnie extends NPC {
       case 2:
         this.targetIndex = this.pitRoomIndex;
         this.updatePath();
-        if(this.tile.index.isEqualTo(this.targetIndex)) {
+        if(this.tile.index.isEqualTo(this.pitRoomIndex)) {
           this.parentLevel.tutorialStage++;
+          this.path = null;
+          this.targetIndex = null;
+          return new Wait(this);
+        } else if(this.path) {
+          return new Movement(this, this.parentLevel.getIndex(this.path[0]));        
+        }
+      case 4:
+        this.targetIndex = player.tile.index;
+        this.updatePath();
+        if(this.path[0].isEqualTo(this.targetIndex)) {
+          return new Shove(this, player);
         } else if(this.path) {
           return new Movement(this, this.parentLevel.getIndex(this.path[0]));        
         }
@@ -534,7 +546,17 @@ class Maxwell extends NPC {
     };
   }
   runTurn() {
-    return new Wait(this);
+    if(this.parentLevel.tutorialStage === 4) {
+      this.targetIndex = player.tile.index;
+      this.updatePath();
+      if(this.path[0].isEqualTo(this.targetIndex)) {
+        return new Shove(this, player);
+      } else if(this.path) {
+        return new Movement(this, this.parentLevel.getIndex(this.path[0]));        
+      }
+    } else {
+      return new Wait(this);
+    }
   }
 }
 class Magnolia extends NPC {

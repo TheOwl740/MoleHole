@@ -12,7 +12,7 @@ class TurnController {
   //adds a new entity to the turn order
   add(entity) {
     this.turnOrder.push(entity)
-    this.turnOrder.sort((a, b) => {
+    this.turnOrder.sort((a, b) => {targetEntity
       return a.nextTurn - b.nextTurn;
     });
   }
@@ -220,5 +220,107 @@ class Interaction extends Action {
   update() {
     this.npc.getInteraction();
     this.actor.animation.state = "idle";
+  }
+}
+class Shove extends Action {
+  constructor(actor, targetEntity) {
+    super(actor, actor.melee.time);
+    this.type = "shove";
+    [this.duration, this.remainingDuration] = [15, 15];
+    //target being shoved
+    this.targetEntity = targetEntity;
+    //rotational direction of the attack
+    this.attackDirection = tk.pairMath(this.actor.transform, this.targetEntity.transform, "angle");
+    //tile being moved to
+    this.targetTile = currentLevel.getIndex(tk.pairMath(this.targetEntity.tile.index, this.actor.tile.index, "subtract").add(this.targetEntity.tile.index))
+    //distance to move each frame
+    this.stepLength = tk.pairMath(this.actor.transform, this.targetEntity.transform, "distance") / this.duration;
+  }
+  update() {
+    //on start
+    if(this.remainingDuration === this.duration) {
+      this.actor.animation.state = "attack";
+      if(this.actor.transform.x !== this.targetTile.transform.x) {
+        this.actor.leftFacing = this.actor.transform.x > this.targetTile.transform.x;
+      }
+    }
+    //during animation
+    if(this.remainingDuration > this.duration / 2 || this.targetTile.type !== "wall") {
+      this.targetEntity.transform.add(tk.calcRotationalTranslate(this.attackDirection, this.stepLength));
+    } else {
+      this.targetEntity.transform.subtract(tk.calcRotationalTranslate(this.attackDirection, this.stepLength));
+    }
+    //at end
+    if(this.remainingDuration === 1) {
+      //reset animation
+      this.actor.animation.state = "idle";
+      //set new position
+      if(this.targetTile.type !== "wall") {
+        this.targetEntity.transform = this.targetTile.transform.duplicate();
+        updateTERelationship(this.targetEntity.tile, this.targetEntity, this.targetTile);
+      }
+      //do fall animation if applicable
+      currentTC.currentAction = new Fall(this.targetEntity);
+    }
+  }
+  complete() {
+    if(this.actor.transform.x !== this.targetTile.transform.x) {
+      this.actor.leftFacing = this.actor.transform.x > this.targetTile.transform.x;
+    }
+    if(this.targetTile.type === "floor") {
+      this.targetEntity.transform = this.targetTile.transform.duplicate();
+      updateTERelationship(this.targetEntity.tile, this.targetEntity, this.targetTile);
+    }
+  }
+}
+class Fall extends Action {
+  constructor(actor) {
+    super(actor, 0);
+    this.type = "fall";
+    [this.duration, this.remainingDuration] = [30, 30];
+    //saves the sprite of an actor before modding it
+    this.savedSprite;
+  }
+  update() {
+    //on start
+    if(this.remainingDuration === this.duration) {
+      this.actor.animation.state = "jump";
+      this.savedSprite = actor.sprites.body.duplicate();
+    }
+    //during animation
+    this.actor.sprites.body.w *= 0.9;
+    this.actor.sprites.body.h *= 0.9;
+    this.actor.sprites.body.r += 12;
+    this.actor.sprites.body.alpha = this.remainingDuration / this.duration;
+    //at end
+    if(this.remainingDuration === 1) {
+      //reset sprite and animation
+      this.actor.animation.state = "idle";
+      this.actor.sprites.body = this.savedSprite;
+      //set new position or kill (pits are disabled f1)
+      if(this.actor.type === "player") {
+        this.actor.health.current /= 2;
+        if(currentLevel.levelId === 0) {
+          loadLevel(1);
+        } else {
+          loadLevel(currentLevel.levelId - 1);
+        }
+      } else {
+        this.actor.health.current = -1;
+      }
+    }
+  }
+  complete() {
+    //set new position or kill (pits are disabled f1)
+    if(this.actor.type === "player") {
+      this.actor.health.current /= 2;
+      if(currentLevel.levelId === 0) {
+        loadLevel(1);
+      } else {
+        loadLevel(currentLevel.levelId - 1);
+      }
+    } else {
+      this.actor.health.current = -1;
+    }
   }
 }
