@@ -211,6 +211,14 @@ class TileOverlay {
         this.sprite = images.overlays.buggyBurrows.duplicate();
         this.sprite.setActive(new Pair(1, 2));
         break;
+      case "rockpile":
+        this.sprite = images.overlays.buggyBurrows.duplicate();
+        this.sprite.setActive(new Pair(0, 3));
+        break;
+      case "spiderStatue":
+        this.sprite = images.overlays.buggyBurrows.duplicate();
+        this.sprite.setActive(new Pair(1, 3));
+        break;
       default:
         this.sprite = images.missingTexture.duplicate();
     }
@@ -298,11 +306,15 @@ class Level {
     //place rooms randomly until all are open
     let activeIndices = [];
     let loopActive = true;
+    let tolerance = 0;
     while(loopActive) {
+      if(tolerance < 30) {
+        tolerance += 0.01
+      }
       loopActive = false;
       activeIndices = [];
       activeRooms.forEach((room) => {
-        activeIndices.push(new Pair(tk.randomNum(2 + room.h, 49), tk.randomNum(0, 47 - room.w)));
+        activeIndices.push(new Pair(tk.randomNum(2 + room.h, 19 + tolerance), tk.randomNum(0, (17 - room.w) + tolerance)));
       });
       for(let room = 0; room < activeRooms.length; room++) {
         for(let comparedRoom = 0; comparedRoom < activeRooms.length; comparedRoom++) {
@@ -718,7 +730,7 @@ const tileMaps = [
     ['w','f','f','f','w'],
     ['e','f','f','f','e'],
     ['w','f','f','f','w'],
-    ['w','w','e','w','w'],
+    ['w','w','e','w','w']
   ]),
   new Room(5, 5, "entranceRoom", 2, [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
@@ -730,7 +742,7 @@ const tileMaps = [
     ['w','f','f','f','w'],
     ['e','f','f','f','e'],
     ['w','f','f','f','w'],
-    ['w','w','e','w','w'],
+    ['w','w','e','w','w']
   ]),
   new Room(5, 5, "exitRoom", 2, [0], [
     {
@@ -742,56 +754,158 @@ const tileMaps = [
     ['w','f','f','f','w'],
     ['e','f','f','f','e'],
     ['w','f','f','f','w'],
-    ['w','w','e','w','w'],
+    ['w','w','e','w','w']
   ]),
-  new Room(5, 5, "smallEmpty", 2, [0], [],
+  new Room(5, 5, "smallEmpty", 2, [0], [
+    {
+      overlay: new TileOverlay("web3"),
+      index: new Pair(1, 1)
+    },
+    {
+      overlay: new TileOverlay("web1"),
+      index: new Pair(2, 3)
+    },
+  ],
   [
     ['w','w','e','w','w'],
     ['w','f','f','f','w'],
     ['e','f','f','f','e'],
     ['w','f','f','f','w'],
+    ['w','w','e','w','w']
+  ]),
+  new Room(7, 7, "mediumEmpty", 3, [0], [
+    {
+      overlay: new TileOverlay("web3"),
+      index: new Pair(1, 1)
+    },
+    {
+      overlay: new TileOverlay("rockpile"),
+      index: new Pair(5, 2)
+    },
+    {
+      overlay: new TileOverlay("web2"),
+      index: new Pair(5, 4)
+    },
+    {
+      overlay: new TileOverlay("web1"),
+      index: new Pair(3, 2)
+    }
+  ],
+  [
+    ['w','w','w','e','w','w','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','e'],
+    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','w'],
+    ['w','w','w','e','w','w','w']
+  ]),
+  new Room(9, 9, "largeEmpty", 3, [0], [
+    {
+      overlay: new TileOverlay("web2"),
+      index: new Pair(5, 4)
+    },
+    {
+      overlay: new TileOverlay("rockpile"),
+      index: new Pair(3, 1)
+    },
+    {
+      overlay: new TileOverlay("web3"),
+      index: new Pair(7, 7)
+    },
+    {
+      overlay: new TileOverlay("rockpile"),
+      index: new Pair(3, 2)
+    },
+    {
+      overlay: new TileOverlay("web1"),
+      index: new Pair(7, 1)
+    }
+  ],
+  [
+    ['w','w','e','w','e','w','e','w','w'],
+    ['w','f','f','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','f','f','e'],
+    ['w','f','f','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','f','f','e'],
+    ['w','f','f','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','f','f','e'],
+    ['w','f','f','f','f','f','f','f','w'],
+    ['w','w','e','w','e','w','e','w','w']
+  ]),
+  new Room(7, 7, "4wayJunction", 4, [0], [
+    {
+      overlay: new TileOverlay("spiderStatue"),
+      index: new Pair(3, 3)
+    }
+  ],
+  [
+    ['w','w','w','e','w','w','w'],
+    ['w','w','f','f','f','w','w'],
+    ['w','f','f','f','f','f','w'],
+    ['e','f','w','f','w','f','e'],
+    ['w','f','f','f','f','f','w'],
+    ['w','w','f','f','f','w','w'],
+    ['w','w','w','e','w','w','w']
+  ]),
+  new Room(7, 7, "2wayJunction", 2, [0], [
+    {
+      overlay: new TileOverlay("spiderStatue"),
+      index: new Pair(3, 3)
+    }
+  ],
+  [
+    ['w','w','w','w','w','w','w'],
+    ['w','w','f','w','f','w','w'],
+    ['w','f','f','f','f','f','w'],
+    ['e','f','f','f','f','f','e'],
+    ['w','f','f','f','f','f','w'],
+    ['w','w','f','w','f','w','w'],
+    ['w','w','w','w','w','w','w']
+  ]),
+  new Room(5, 5, "smallWebRoom", 1, [0], [
+    {
+      overlay: new TileOverlay("web3"),
+      index: new Pair(1, 1)
+    },
+    {
+      overlay: new TileOverlay("web3"),
+      index: new Pair(1, 2)
+    },
+    {
+      overlay: new TileOverlay("web2"),
+      index: new Pair(1, 3)
+    },
+    {
+      overlay: new TileOverlay("web4"),
+      index: new Pair(2, 1)
+    },
+    {
+      overlay: new TileOverlay("web3"),
+      index: new Pair(2, 2)
+    },
+    {
+      overlay: new TileOverlay("web2"),
+      index: new Pair(2, 3)
+    },
+    {
+      overlay: new TileOverlay("web4"),
+      index: new Pair(3, 1)
+    },
+    {
+      overlay: new TileOverlay("web2"),
+      index: new Pair(3, 2)
+    },
+    {
+      overlay: new TileOverlay("web1"),
+      index: new Pair(3, 3)
+    }
+  ],
+  [
     ['w','w','e','w','w'],
-  ]),
-  new Room(7, 7, "mediumEmpty", 4, [0], [],
-  [
-    ['w','w','w','e','w','w','w'],
-    ['w','f','f','f','f','f','w'],
-    ['w','f','f','f','f','f','w'],
-    ['e','f','f','f','f','f','e'],
-    ['w','f','f','f','f','f','w'],
-    ['w','f','f','f','f','f','w'],
-    ['w','w','w','e','w','w','w'],
-  ]),
-  new Room(7, 7, "largeEmpty", 5, [0], [],
-  [
-    ['w','w','e','w','e','w','e','w','w'],
-    ['w','f','f','f','f','f','f','f','w'],
-    ['e','f','f','f','f','f','f','f','e'],
-    ['w','f','f','f','f','f','f','f','w'],
-    ['e','f','f','f','f','f','f','f','e'],
-    ['w','f','f','f','f','f','f','f','w'],
-    ['e','f','f','f','f','f','f','f','e'],
-    ['w','f','f','f','f','f','f','f','w'],
-    ['w','w','e','w','e','w','e','w','w'],
-  ]),
-  new Room(7, 7, "4wayJunction", 4, [0], [],
-  [
-    ['w','w','w','e','w','w','w'],
-    ['w','w','f','f','f','w','w'],
-    ['w','f','f','w','f','f','w'],
-    ['e','f','w','w','w','f','e'],
-    ['w','f','f','w','f','f','w'],
-    ['w','w','f','f','f','w','w'],
-    ['w','w','w','e','w','w','w'],
-  ]),
-  new Room(7, 7, "2wayJunction", 2, [0], [],
-  [
-    ['w','w','w','w','w','w','w'],
-    ['w','w','f','w','f','w','w'],
-    ['w','f','f','f','f','f','w'],
-    ['e','f','f','f','f','f','e'],
-    ['w','f','f','f','f','f','w'],
-    ['w','w','f','w','f','w','w'],
-    ['w','w','w','w','w','w','w'],
+    ['w','f','f','f','w'],
+    ['e','f','f','f','e'],
+    ['w','f','f','f','w'],
+    ['w','w','e','w','w']
   ]),
 ]
