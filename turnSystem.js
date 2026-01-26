@@ -181,45 +181,37 @@ class Melee extends Action {
   update() {
     //on start
     if(this.remainingDuration === this.duration) {
-      //face right direction
-      this.actor.shape.r = this.attackDirection;
+      //trigger damage effect
       currentEC.add(new DamageNumber(this));
+      //set animaiton
+      this.actor.animation.state = "attack";
+      this.actor.animation.frame = 0;
+      //face right direction
+      if(this.actor.transform.x !== this.targetEntity.transform.x) {
+        this.actor.leftFacing = this.actor.transform.x > this.targetEntity.transform.x;
+      }
     }
     if(this.remainingDuration > 10) {
+      //move forward
       this.actor.transform.rotationalIncrease(this.attackDirection, tileSize / 10);
     } else if(this.remainingDuration === 10) {
+      //enact damage
       this.targetEntity.damage(this);
     } else if(this.remainingDuration > 4) {
+      //move back
       this.actor.transform.rotationalIncrease(this.attackDirection, tileSize / -10);
+    } else if(this.remainingDuration === 1) {
+      //reset animation
+      this.actor.animation.state = "idle";
     }
   }
   complete() {
-    this.actor.shape.r = this.attackDirection;
+    //face right direction
+    if(this.actor.transform.x !== this.targetEntity.transform.x) {
+      this.actor.leftFacing = this.actor.transform.x > this.targetEntity.transform.x;
+    }
+    //apply damage
     this.targetEntity.damage(this);
-  }
-}
-class Wait extends Action {
-  constructor(actor) {
-    super(actor, 1);
-    this.type = "wait";
-    [this.duration, this.remainingDuration] = [1, 1];
-  }
-  update() {
-    currentEC.add(new WaitEffect(this));
-    this.actor.animation.state = "idle";
-  }
-}
-class Interaction extends Action {
-  constructor(actor, npc) {
-    super(actor, 0);
-    this.type = "interaction";
-    [this.duration, this.remainingDuration] = [1, 1];
-    //npc being interacted with
-    this.npc = npc;
-  }
-  update() {
-    this.npc.getInteraction();
-    this.actor.animation.state = "idle";
   }
 }
 class Shove extends Action {
@@ -279,6 +271,30 @@ class Shove extends Action {
     if(this.targetTile.type === "pit") {
       currentTC.currentAction = new Fall(this.targetEntity);
     }
+  }
+}
+class Wait extends Action {
+  constructor(actor) {
+    super(actor, 1);
+    this.type = "wait";
+    [this.duration, this.remainingDuration] = [1, 1];
+  }
+  update() {
+    currentEC.add(new WaitEffect(this));
+    this.actor.animation.state = "idle";
+  }
+}
+class Interaction extends Action {
+  constructor(actor, npc) {
+    super(actor, 0);
+    this.type = "interaction";
+    [this.duration, this.remainingDuration] = [1, 1];
+    //npc being interacted with
+    this.npc = npc;
+  }
+  update() {
+    this.npc.getInteraction();
+    this.actor.animation.state = "idle";
   }
 }
 class Fall extends Action {

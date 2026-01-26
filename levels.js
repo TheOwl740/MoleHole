@@ -146,6 +146,10 @@ class TileOverlay {
         this.sprite = images.overlays.moleHole.duplicate();
         this.sprite.setActive(new Pair(1, 0));
         break;
+      case "painting":
+        this.sprite = images.overlays.moleHole.duplicate();
+        this.sprite.setActive(new Pair(0, 6));
+        break;
       case "greenBedLeft":
         this.sprite = images.overlays.moleHole.duplicate();
         this.sprite.setActive(new Pair(0, 1));
@@ -253,16 +257,16 @@ class Level {
       this.zone = "The Mole Hill";
       this.tileset = images.tilesets.dirt;
       this.tutorialStage = 0;
-    } else if(this.levelId >= 0) {
+    } else if(this.levelId >= 1) {
       this.zone = "Buggy Burrows";
       this.tileset = images.tilesets.dirt;
-    } else if(this.levelId >= 4) {
+    } else if(this.levelId >= 5) {
       this.zone = "The Gnome Home";
       this.tileset = images.tilesets.dirt;
-    } else if(this.levelId >= 8) {
+    } else if(this.levelId >= 9) {
       this.zone = "Snakey Stronghold";
       this.tileset = images.tilesets.dirt;
-    } else if(this.levelId >= 12) {
+    } else if(this.levelId >= 13) {
       this.zone = "The Mustelid Mafia";
       this.tileset = images.tilesets.dirt;
     }
@@ -314,7 +318,7 @@ class Level {
       loopActive = false;
       activeIndices = [];
       activeRooms.forEach((room) => {
-        activeIndices.push(new Pair(tk.randomNum(2 + room.h, 19 + tolerance), tk.randomNum(0, (17 - room.w) + tolerance)));
+        activeIndices.push(new Pair(tk.randomNum(2 + room.h, 17 + tolerance), tk.randomNum(2, (17 - room.w) + tolerance)));
       });
       for(let room = 0; room < activeRooms.length; room++) {
         for(let comparedRoom = 0; comparedRoom < activeRooms.length; comparedRoom++) {
@@ -413,26 +417,41 @@ class Level {
         activeTile.attachOverlay()
       }
     }
-    //set player spawn
-    if(this.levelId === 0) {
-      //place npcs
-      for(let room = 0; room < activeRooms.length; room++) {
-        if(activeRooms[room].id === "marshallsRoom") {
-          this.playerSpawn = this.getIndex(new Pair(activeIndices[room].y + 5, activeIndices[room].x - 1)).transform.duplicate();
-          this.npcs.push(new Minnie(this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 1)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 1))))
+    //set player spawn an place npcs
+    switch(this.levelId) {
+      case 0:
+        //place npcs alongside player
+        for(let room = 0; room < activeRooms.length; room++) {
+          if(activeRooms[room].id === "marshallsRoom") {
+            this.playerSpawn = this.getIndex(new Pair(activeIndices[room].y + 5, activeIndices[room].x - 1)).transform.duplicate();
+            this.npcs.push(new Minnie(this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 1)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 1))))
+          }
+          if(activeRooms[room].id === "pitRoom") {
+            this.npcs.push(new Michael(this.getIndex(new Pair(activeIndices[room].y + 4, activeIndices[room].x - 2)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 4, activeIndices[room].x - 2))))
+            this.npcs.push(new Maxwell(this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 4)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 4))))
+            this.npcs.push(new Magnolia(this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 2)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 2))))
+          }
         }
-        if(activeRooms[room].id === "pitRoom") {
-          this.npcs.push(new Michael(this.getIndex(new Pair(activeIndices[room].y + 4, activeIndices[room].x - 2)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 4, activeIndices[room].x - 2))))
-          this.npcs.push(new Maxwell(this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 4)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 4))))
-          this.npcs.push(new Magnolia(this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 2)).transform.duplicate(), this.getIndex(new Pair(activeIndices[room].y + 3, activeIndices[room].x - 2))))
+        //break as playerspawn is also placed, so no need for default
+        break;
+      case 3:
+        //place centipete and centipenny
+      case 7:
+        //place gerard gnome
+      case 11:
+        //place leonard lizard
+      case 15:
+        //place madeline mole
+      default:
+        for(let room = 0; room < activeRooms.length; room++) {
+          if(activeRooms[room].id === "entranceRoom") {
+            this.playerSpawn = this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 2)).transform.duplicate();
+          }
         }
-      }
-    } else {
-      for(let room = 0; room < activeRooms.length; room++) {
-        if(activeRooms[room].id === "entranceRoom") {
-          this.playerSpawn = this.getIndex(new Pair(activeIndices[room].y + 2, activeIndices[room].x - 2)).transform.duplicate();
-        }
-      }
+    }
+    //place initial enemies (relies on player spawn)
+    for(let i = 0; i < (this.levelId * 1.5) + 5; i++) {
+      this.spawnEnemy();
     }
   }
   render() {
@@ -456,7 +475,7 @@ class Level {
     for(let i = 0; i < this.enemies.length; i++) {
       if(this.enemies[i].health.current < 1) {
         currentTC.remove(this.enemies[i]);
-        currentEC.add(Death(this.enemies[i]));
+        currentEC.add(new Death(this.enemies[i]));
         player.addXP(this.enemies[i].xpValue);
         this.enemies[i].tile.entity = null;
         this.enemies.splice(i, 1);
@@ -514,6 +533,35 @@ class Level {
       }
     }
     return retList;
+  }
+  spawnEnemy() {
+    //decides what enemy will spawn, for weighted spawns
+    let enemySeed = tk.randomNum(0, 100)
+    //find a valid spawn location
+    let spawnTile = null;
+    let validSpawn = false;
+    while(!validSpawn) {
+      //pick random index
+      spawnTile = this.getIndex(new Pair(tk.randomNum(0, 49), tk.randomNum(0, 49)));
+      //check for walkable floor
+      if(spawnTile.type === "floor" && spawnTile.entity === null) {
+        //check for player
+        if(player) {
+          if(tk.pairMath(spawnTile.index, player.tile.index, "distance") > this.visionRange * 1.5) {
+            validSpawn = true;
+          }
+        } else {
+          if(tk.pairMath(spawnTile.index, this.getTile(this.playerSpawn).index, "distance") > this.visionRange * 1.5) {
+            validSpawn = true;
+          }
+        }
+      }
+    }
+    switch(this.levelId) {
+      case 1:
+        this.enemies.push(new WigglyWorm(spawnTile.transform.duplicate(), spawnTile));
+        break;
+    }
   }
   reshade() {
     //darken all tiles
@@ -618,7 +666,7 @@ class Room {
     return retObj;
   }
   getIndexCollider(tlIndex) {
-    return new Collider(tlIndex.duplicate().add(new Pair(((this.w / 2) + 1), (this.w / 2) + 1)), new Rectangle(0, this.w + 2, this.h + 2));
+    return new Collider(tlIndex.duplicate().add(new Pair(this.w / 2, this.h / 2)), new Rectangle(0, this.w + 4, this.h + 4));
   }
 }
 
@@ -631,6 +679,10 @@ const tileMaps = [
     {
       overlay: new TileOverlay("couchRight"),
       index: new Pair(3, 2)
+    },
+    {
+      overlay: new TileOverlay("painting"),
+      index: new Pair(3, 0)
     }
   ], [
     ['w','w','w','w','w','w','w','w'],

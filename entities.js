@@ -724,11 +724,11 @@ class Enemy {
       }
       //body facing update and render
       this.sprites.body.hf = this.leftFacing;
-      rt.renderImage(this.transform, this.sprite.body);
+      rt.renderImage(this.transform, this.sprites.body);
       //hand facing update and render if applicabb;e
-      if(this.sprite.hand) {
+      if(this.sprites.hand) {
         this.sprites.hand.hf = this.leftFacing;
-        rt.renderImage(this.transform, this.sprite.hand)
+        rt.renderImage(this.transform, this.sprites.hand)
       }
     }
   }

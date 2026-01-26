@@ -27,6 +27,7 @@ class EffectController {
 //effect class template
 class Effect {
   constructor(duration, transform) {
+    this.duration = duration;
     this.remainingDuration = duration;
     this.transform = transform.duplicate();
   }
@@ -40,7 +41,7 @@ class DamageNumber extends Effect {
   update() {
     this.remainingDuration--;
     if(this.sourceAttack.actor.tile.visible) {
-      rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "-" + this.sourceAttack.damage, 0, (landscape ? cs.w / 50 : cs.h / 35), "center"), new Fill(this.sourceAttack.surprise ? "#ffff00" : "#561919", this.remainingDuration / 60));
+      rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "-" + this.sourceAttack.damage, 0, (landscape ? cs.w / 50 : cs.h / 35), "center"), new Fill(this.sourceAttack.surprise ? "#ffff00" : "#ff0202", this.remainingDuration / 60));
     }
   }
 }
@@ -94,6 +95,24 @@ class WaitEffect extends Effect {
     this.remainingDuration--;
     if(this.actor.tile.visible) {
       rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "...", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#8500d2", this.remainingDuration / 100));
+    }
+  }
+}
+class Death extends Effect {
+  constructor(entity) {
+    super(20, entity.transform.duplicate());
+    this.entity = entity;
+  }
+  update() {
+    this.remainingDuration--;
+    //fade out
+    this.entity.sprites.body.alpha = this.remainingDuration / this.duration;
+    if(this.entity.sprites?.hand) {
+      this.entity.sprites.hand.alpha = this.remainingDuration / this.duration;
+    }
+    if(this.entity.tile.visible) {
+      this.entity.health.current = this.entity.health.max
+      this.entity.render();
     }
   }
 }
