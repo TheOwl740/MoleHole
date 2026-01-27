@@ -782,7 +782,7 @@ class Enemy {
             return new Movement(this, this.parentLevel.getIndex(this.path[0]));
           }
         }
-        //return null if state change to attack and as backup
+        //return null if state change to attack
         return null;
       case "attacking":
         //wait and reset if target out of range
@@ -796,10 +796,16 @@ class Enemy {
           //retarget
           this.targetIndex = player.lastPosition;
           this.updatePath();
+          //if no path then target actual player position
+          if(this.path === null) {
+            this.targetIndex = player.tile.index;
+            this.updatePath();
+          }
+          //clear path if still no path
           if(this.path === null) {
             this.targetIndex = null;
-            return null;
-          }          
+            return new Wait(this);
+          }      
           //attack if close
           if(heuristicToPlayer < 2) {
             return new Melee(this, player);
