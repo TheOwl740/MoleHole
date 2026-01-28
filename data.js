@@ -48,6 +48,9 @@ pixelFont.load().then((font) => {
 //images
 const images = {
   missingTexture: new Img(tk.generateImage("Assets/missingTexture.png"), 1, 0, 0, 0, tileSize, tileSize, false, false),
+  hud: {
+    player: new Img(tk.generateImage("Assets/HUD/player.png"), 1, 0, 0, 0, tileSize * 3, tileSize, false, false),
+  },
   moles: {
     marshall: {
       body: new Sprite(tk.generateImage("Assets/Moles/Marshall/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)

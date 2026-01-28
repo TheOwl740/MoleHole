@@ -79,14 +79,20 @@ function renderHealthbar(targetObj, yOffset) {
 }
 //renders and updates hud overlay
 function updateHUD() {
-  //health bar
-  rt.renderRectangle(new Pair(cs.w / 8, cs.h / -32).add(rt.camera), new Rectangle(0, cs.w / 4, cs.h / 16), new Fill("#d60000", 0.5), null);
-  rt.renderRectangle(new Pair((cs.w / 8) * (player.health.current / player.health.max), cs.h / -32).add(rt.camera), new Rectangle(0, (cs.w / 4) * (player.health.current / player.health.max), cs.h / 16), new Fill("#16d700", 0.8), null);
-  rt.renderText(new Pair(cs.w / 8, cs.h / -32).add(rt.camera), new TextNode("pixelFont", `HP: ${player.health.current}/${player.health.max}`, 0, cs.w / 30, "center"), new Fill("#FFFFFF", 1));
-  //xp bar
-  rt.renderRectangle(new Pair((cs.w / 4) + (cs.w / 8), cs.h / -32).add(rt.camera), new Rectangle(0, cs.w / 4, cs.h / 16), new Fill("#82846e", 0.5), null);
-  rt.renderRectangle(new Pair((cs.w / 4) + ((cs.w / 8) * (player.xp / 20)), cs.h / -32).add(rt.camera), new Rectangle(0, (cs.w / 4) * (player.xp / 20), cs.h / 16), new Fill("#c4b921", 0.8), null);
-  rt.renderText(new Pair((cs.w / 4) + (cs.w / 8), cs.h / -32).add(rt.camera), new TextNode("pixelFont", `XP: ${player.xp}/20`, 0, cs.w / 30, "center"), new Fill("#FFFFFF", 1));
+  //health fill
+  hrt.renderRectangle(new Pair(tileSize * 1.5, tileSize * -0.5), new Rectangle(0, tileSize, tileSize), new Fill("#690000", 1), null);
+  let healthRect = new Rectangle(0, tileSize, tileSize * (player.health.current / player.health.max))
+  hrt.renderRectangle(new Pair(tileSize * 1.5, (healthRect.h / 2) - tileSize), healthRect, new Fill("#ff0707", 1), null);
+  hrt.renderText(new Pair(tileSize * 1.5, tileSize * -0.5), new TextNode("pixelFont", `${player.health.current}/${player.health.max}`, 0, tileSize / 5, "center"), new Fill("#FFFFFF", 1));
+  //xp fill
+  hrt.renderRectangle(new Pair(tileSize * 2.5, tileSize * -0.5), new Rectangle(0, tileSize, tileSize), new Fill("#5e5300", 1), null);
+  let xpRect = new Rectangle(0, tileSize, tileSize * (player.xp / 20))
+  hrt.renderRectangle(new Pair(tileSize * 2.5, (xpRect.h / 2) - tileSize), xpRect, new Fill("#ffee00", 1), null);
+  hrt.renderText(new Pair(tileSize * 2.5, tileSize * -0.5), new TextNode("pixelFont", `${player.xp}/20`, 0, tileSize / 5, "center"), new Fill("#FFFFFF", 1));
+  //player overlay
+  hrt.renderImage(new Pair(tileSize * 1.5, tileSize * -0.5), images.hud.player);
+  hrt.renderImage(new Pair(tileSize * 0.5, tileSize * -0.7), player.sprites.body);
+
   //wait/cancel button
   rt.renderRectangle(buttonData.stopWait.transform().add(rt.camera), buttonData.stopWait.shape, new Fill("#82846e", 0.5), null);
   if(player.targetIndex === null) {
