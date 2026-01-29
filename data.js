@@ -36,6 +36,8 @@ let currentEC = null;
 const landscape = cs.w > cs.h;
 //tilesize for rendering tiles
 const tileSize = Math.floor(landscape ? cs.w / 15 : cs.h / 10);
+//hud tile size for rendering hud elements
+const hudTileSize = tileSize * 0.67;
 //tile size rectangle for overlays
 const tileShape = new Rectangle(0, tileSize, tileSize);
 
@@ -49,7 +51,9 @@ pixelFont.load().then((font) => {
 const images = {
   missingTexture: new Img(tk.generateImage("Assets/missingTexture.png"), 1, 0, 0, 0, tileSize, tileSize, false, false),
   hud: {
-    player: new Img(tk.generateImage("Assets/HUD/player.png"), 1, 0, 0, 0, tileSize * 3, tileSize, false, false),
+    player: new Img(tk.generateImage("Assets/HUD/player.png"), 1, 0, 0, 0, hudTileSize * 3, hudTileSize, false, false),
+    stopWait: new Sprite(tk.generateImage("Assets/HUD/stopWait.png"), 1, 0, 0, 0, hudTileSize, hudTileSize, false, false, 32, 32),
+    exit: new Img(tk.generateImage("Assets/HUD/exit.png"), 1, 0, 0, 0, hudTileSize, hudTileSize, false, false)
   },
   moles: {
     marshall: {
@@ -131,34 +135,19 @@ const tapData = {
 //hud button data
 const buttonData = {
   stopWait: {
-    transform: () => {return new Pair(cs.w - (cs.h / 32), cs.h / -32)},
-    shape: new Rectangle(0, cs.h / 16, cs.h / 16),
+    transform: () => {return new Pair(cs.w - (hudTileSize / 2), hudTileSize / -2)},
+    shape: new Rectangle(0, hudTileSize, hudTileSize),
     collider: () => {return new Collider(buttonData.stopWait.transform(), buttonData.stopWait.shape)}
   },
   skillTree: {
-    transform: () => {return new Pair(cs.w - ((cs.h * 3) / 32), cs.h / -32)},
-    shape: new Rectangle(0, cs.h / 16, cs.h / 16),
+    transform: () => {return new Pair(hudTileSize * 2.5, hudTileSize / -2)},
+    shape: new Rectangle(0, hudTileSize, hudTileSize),
     collider: () => {return new Collider(buttonData.skillTree.transform(), buttonData.skillTree.shape)}
   },
   exit: {
-    transform: () => {return new Pair(cs.w - (cs.h / 32), cs.h / -32)},
-    shape: new Rectangle(0, cs.h / 16, cs.h / 16),
+    transform: () => {return new Pair(cs.w - (hudTileSize / 2), hudTileSize / -2)},
+    shape: new Rectangle(0, hudTileSize, hudTileSize),
     collider: () => {return new Collider(buttonData.exit.transform(), buttonData.exit.shape)}
-  },
-  upgrade: {
-    transforms: {
-      speed: () => {return new Pair(cs.w / 8, (cs.h / -2) + (cs.h / 8))},
-      attack: () => {return new Pair(cs.w - (cs.w / 8), (cs.h / -2) + (cs.h / 8))},
-      health: () => {return new Pair(cs.w / 8, (cs.h / -2) - (cs.h / 8))},
-      regen: () => {return new Pair(cs.w - (cs.w / 8), (cs.h / -2) - (cs.h / 8))},
-    },
-    shape: new Rectangle(0, cs.h / 8, cs.h / 16),
-    collider: (transform) => {return new Collider(transform, buttonData.upgrade.shape)}
-  },
-  tutorial: {
-    transform: () => {return new Pair(cs.w / 2, cs.h * -0.75)},
-    shape: new Rectangle(0, cs.h / 4, cs.h / 12),
-    collider: () => {return new Collider(buttonData.tutorial.transform(), buttonData.tutorial.shape)}
   }
 };
 //button count data

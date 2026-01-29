@@ -80,41 +80,35 @@ function renderHealthbar(targetObj, yOffset) {
 //renders and updates hud overlay
 function updateHUD() {
   //health fill
-  hrt.renderRectangle(new Pair(tileSize * 1.5, tileSize * -0.5), new Rectangle(0, tileSize, tileSize), new Fill("#690000", 1), null);
-  let healthRect = new Rectangle(0, tileSize, tileSize * (player.health.current / player.health.max))
-  hrt.renderRectangle(new Pair(tileSize * 1.5, (healthRect.h / 2) - tileSize), healthRect, new Fill("#ff0707", 1), null);
-  hrt.renderText(new Pair(tileSize * 1.5, tileSize * -0.5), new TextNode("pixelFont", `${player.health.current}/${player.health.max}`, 0, tileSize / 5, "center"), new Fill("#FFFFFF", 1));
+  hrt.renderRectangle(new Pair(hudTileSize * 1.5, hudTileSize * -0.5), new Rectangle(0, hudTileSize, hudTileSize), new Fill("#690000", 1), null);
+  let healthRect = new Rectangle(0, hudTileSize, hudTileSize * (player.health.current / player.health.max))
+  hrt.renderRectangle(new Pair(hudTileSize * 1.5, (healthRect.h / 2) - hudTileSize), healthRect, new Fill("#ff0707", 1), null);
+  hrt.renderText(new Pair(hudTileSize * 1.5, hudTileSize * -0.5), new TextNode("pixelFont", `${player.health.current}/${player.health.max}`, 0, hudTileSize / 5, "center"), new Fill("#FFFFFF", 1));
   //xp fill
-  hrt.renderRectangle(new Pair(tileSize * 2.5, tileSize * -0.5), new Rectangle(0, tileSize, tileSize), new Fill("#5e5300", 1), null);
-  let xpRect = new Rectangle(0, tileSize, tileSize * (player.xp / 20))
-  hrt.renderRectangle(new Pair(tileSize * 2.5, (xpRect.h / 2) - tileSize), xpRect, new Fill("#ffee00", 1), null);
-  hrt.renderText(new Pair(tileSize * 2.5, tileSize * -0.5), new TextNode("pixelFont", `${player.xp}/20`, 0, tileSize / 5, "center"), new Fill("#FFFFFF", 1));
+  hrt.renderRectangle(new Pair(hudTileSize * 2.5, hudTileSize * -0.5), new Rectangle(0, hudTileSize, hudTileSize), new Fill("#5e5300", 1), null);
+  let xpRect = new Rectangle(0, hudTileSize, hudTileSize * (player.xp / 20))
+  hrt.renderRectangle(new Pair(hudTileSize * 2.5, (xpRect.h / 2) - hudTileSize), xpRect, new Fill("#ffee00", 1), null);
+  hrt.renderText(new Pair(hudTileSize * 2.5, hudTileSize * -0.5), new TextNode("pixelFont", `${player.xp}/20`, 0, hudTileSize / 5, "center"), new Fill("#FFFFFF", 1));
   //player overlay
-  hrt.renderImage(new Pair(tileSize * 1.5, tileSize * -0.5), images.hud.player);
-  hrt.renderImage(new Pair(tileSize * 0.5, tileSize * -0.7), player.sprites.body);
-
-  //wait/cancel button
-  rt.renderRectangle(buttonData.stopWait.transform().add(rt.camera), buttonData.stopWait.shape, new Fill("#82846e", 0.5), null);
-  if(player.targetIndex === null) {
-    rt.renderText(buttonData.stopWait.transform().add(rt.camera), new TextNode("pixelFont", "z", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#8500d2", 1));
-  } else {
-    rt.renderText(buttonData.stopWait.transform().add(rt.camera), new TextNode("pixelFont", "x", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#d21c1c", 1));
-    //cancel move operation
-    if(et.getKey("x") || (tk.detectCollision(et.cursor, buttonData.stopWait.collider()) && (landscape ? et.getClick("left") : tapData.realClick))) {
-      player.targetIndex = null;
-      player.movePath = null;
-    }
-  }
-  //skill tree button
-  rt.renderRectangle(buttonData.skillTree.transform().add(rt.camera), buttonData.skillTree.shape, new Fill("#82846e", 0.5), null);
-  rt.renderText(buttonData.skillTree.transform().add(rt.camera), new TextNode("pixelFont", "+", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#c4b921", 1));
-  //skill tree access
-  if(et.getKey("q") || (tk.detectCollision(et.cursor, buttonData.skillTree.collider()) && (landscape ? et.getClick("left") : tapData.realClick))) {
-    gameState = "skillTree";
-  }
-  
+  hrt.renderImage(new Pair(hudTileSize * 1.5, hudTileSize * -0.5), images.hud.player);
+  let playerIcon = player.sprites.body.duplicate();
+  [playerIcon.w, playerIcon.h] = [hudTileSize, hudTileSize];
+  playerIcon.setActive(player.sprites.body.activeTile);
+  hrt.renderImage(new Pair(hudTileSize * 0.5, hudTileSize * -0.9), playerIcon);
+  //stop/wait button
+  images.hud.stopWait.setActive(new Pair(player.targetIndex ? 1 : 0, 0));
+  hrt.renderImage(buttonData.stopWait.transform(), images.hud.stopWait);  
   //update dialogs
   dialogController.update();
+  //stop (wait controlled in player runturn)
+  if(tk.detectCollision(et.cursor, buttonData.stopWait.collider()) && (landscape ? et.getClick("left") : tapData.realClick) && (player.targetIndex !== null)) {
+    player.targetIndex = null;
+    player.path = null;
+  }
+  //skill tree access
+  if(tk.detectCollision(et.cursor, buttonData.skillTree.collider()) && (landscape ? et.getClick("left") : tapData.realClick)) {
+    gameState = "skillTree";
+  }
 }
 //renders fail screen
 function updateFailscreen() {
@@ -141,55 +135,13 @@ function updateSkillTree() {
   //clear canvas
   cs.fillAll(new Fill("#000000", 1))
   //exit button render
-  rt.renderRectangle(buttonData.exit.transform().add(rt.camera), buttonData.exit.shape, new Fill("#82846e", 0.5), null);
-  rt.renderText(buttonData.exit.transform().add(rt.camera), new TextNode("pixelFont", "x", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#d13c3c", 1));
+  hrt.renderImage(buttonData.exit.transform(), images.hud.exit);
   //exit button function
-  if((et.getKey("x") || (tk.detectCollision(et.cursor, buttonData.exit.collider()) && (landscape ? et.getClick("left") : tapData.realClick))) && bc.ready()) {
+  if((tk.detectCollision(et.cursor, buttonData.exit.collider()) && (landscape ? et.getClick("left") : tapData.realClick)) && bc.ready()) {
     gameState = "inGame";
   }
   //main text and points
-  rt.renderText(new Pair(cs.w / 2, cs.h / -2).add(rt.camera), new TextNode("pixelFont", `Upgrades: ${player.skillPoints}pts`, 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#ffffff", 1));
-  //speed upgrade render
-  rt.renderRectangle(buttonData.upgrade.transforms.speed().add(rt.camera), buttonData.upgrade.shape, new Fill("#6f6f6f", 1), null);
-  rt.renderText(buttonData.upgrade.transforms.speed().add(rt.camera), new TextNode("pixelFont", "speed", 0, (landscape ? cs.w / 65 : cs.h / 35), "center"), new Fill("#fff200", 1));
-  //button function
-  if((tk.detectCollision(et.cursor, buttonData.upgrade.collider(buttonData.upgrade.transforms.speed())) && (landscape ? et.getClick("left") : tapData.realClick)) && bc.ready()) {
-    if(player.skillPoints > 0) {
-      player.skillPoints--;
-      player.moveTime = Math.floor(player.moveTime * 900) / 1000;
-    }
-  }
-  //attack upgrade
-  rt.renderRectangle(buttonData.upgrade.transforms.attack().add(rt.camera), buttonData.upgrade.shape, new Fill("#6f6f6f", 1), null);
-  rt.renderText(buttonData.upgrade.transforms.attack().add(rt.camera), new TextNode("pixelFont", "attack", 0, (landscape ? cs.w / 65 : cs.h / 35), "center"), new Fill("#d13c3c", 1));
-  //button function
-  if((tk.detectCollision(et.cursor, buttonData.upgrade.collider(buttonData.upgrade.transforms.attack())) && (landscape ? et.getClick("left") : tapData.realClick)) && bc.ready()) {
-    if(player.skillPoints > 0) {
-      player.skillPoints--;
-      player.melee.damage++;
-    }
-  }
-  //health upgrade
-  rt.renderRectangle(buttonData.upgrade.transforms.health().add(rt.camera), buttonData.upgrade.shape, new Fill("#6f6f6f", 1), null);
-  rt.renderText(buttonData.upgrade.transforms.health().add(rt.camera), new TextNode("pixelFont", "health", 0, (landscape ? cs.w / 65 : cs.h / 35), "center"), new Fill("#6aff00", 1));
-  //button function
-  if((tk.detectCollision(et.cursor, buttonData.upgrade.collider(buttonData.upgrade.transforms.health())) && (landscape ? et.getClick("left") : tapData.realClick)) && bc.ready()) {
-    if(player.skillPoints > 0) {
-      player.skillPoints--;
-      player.health.max += 5;
-      player.health.current += 5;
-    }
-  }
-  //regen upgrade
-  rt.renderRectangle(buttonData.upgrade.transforms.regen().add(rt.camera), buttonData.upgrade.shape, new Fill("#6f6f6f", 1), null);
-  rt.renderText(buttonData.upgrade.transforms.regen().add(rt.camera), new TextNode("pixelFont", "regen", 0, (landscape ? cs.w / 65 : cs.h / 35), "center"), new Fill("#ff00d9", 1));
-  //button function
-  if((tk.detectCollision(et.cursor, buttonData.upgrade.collider(buttonData.upgrade.transforms.regen())) && (landscape ? et.getClick("left") : tapData.realClick)) && bc.ready()) {
-    if(player.skillPoints > 0) {
-      player.skillPoints--;
-      player.health.regenMax = Math.floor(player.health.regenMax * 900) / 1000;
-    }
-  }
+  hrt.renderText(new Pair(cs.w / 2, (landscape ? cs.w : cs.h) / -30), new TextNode("pixelFont", `Upgrades: ${player.skillPoints}pts`, 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#ffffff", 1));
 }
 //updates the relationship between entity and tile
 function updateTERelationship(oldTile, entity, newTile) {

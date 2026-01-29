@@ -132,7 +132,7 @@ class Player {
     //set last position
     this.lastPosition = this.tile.index;
     //wait action
-    if(this.targetIndex === null && ((et.getKey("z") || (tk.detectCollision(et.cursor, buttonData.stopWait.collider()) && (landscape ? et.getClick("left") : tapData.realClick))) && bc.ready())) {
+    if(this.targetIndex === null && ((tk.detectCollision(et.cursor, buttonData.stopWait.collider()) && (landscape ? et.getClick("left") : tapData.realClick)) && bc.ready())) {
       return new Wait(this);
     }
     //check if at target
