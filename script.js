@@ -22,8 +22,9 @@ function update() {
       currentLevel.update();
       currentLevel.render();
       player.render();
-      currentEC.update();
+      currentEC.update(false);
       updateHUD();
+      currentEC.update(true);
       break;
     case "skillTree":
       updateSkillTree();

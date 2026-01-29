@@ -222,6 +222,7 @@ class Player {
       currentEC.add(new SPEffect(points));
       this.skillPoints += points;
       this.xp -= points * 20;
+      currentEC.add(new IconBurst(tk.pairMath(buttonData.skillTree.transform(), new Pair(0, hudTileSize / -2), "add"), "gravity", images.hud.miniIcons, 10))
     } else {
       currentEC.add(new XPEffect(count));
     }

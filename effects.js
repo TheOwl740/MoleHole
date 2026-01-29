@@ -5,28 +5,51 @@
 class EffectController {
   constructor() {
     this.activeEffects = [];
+    this.activeHUDEffects = [];
   }
   add(effect) {
-    this.activeEffects.push(effect);
+    if(effect.hudLayer) {
+      this.activeHUDEffects.push(effect);
+    } else {
+      this.activeEffects.push(effect);
+    }
   }
-  update() {
+  update(onHUD) {
+    //effect temp container
     let effect;
-    for(let ei = 0; ei < this.activeEffects.length; ei++) {
-      effect = this.activeEffects[ei];
-      //delete expired effects
-      if(effect.remainingDuration <= 0) {
-        this.activeEffects.splice(ei, 1);
-        ei--;
-        continue;
+    //updates hud effects
+    if(onHUD) {
+      for(let ei = 0; ei < this.activeHUDEffects.length; ei++) {
+        effect = this.activeHUDEffects[ei];
+        //delete expired effects
+        if(effect.remainingDuration <= 0) {
+          this.activeHUDEffects.splice(ei, 1);
+          ei--;
+          continue;
+        }
+        //increment timer and render
+        effect.update();
       }
-      //increment timer and render
-      effect.update();
+    //updates normal effects
+    } else {
+      for(let ei = 0; ei < this.activeEffects.length; ei++) {
+        effect = this.activeEffects[ei];
+        //delete expired effects
+        if(effect.remainingDuration <= 0) {
+          this.activeEffects.splice(ei, 1);
+          ei--;
+          continue;
+        }
+        //increment timer and render
+        effect.update();
+      }
     }
   }
 }
 //effect class template
 class Effect {
-  constructor(duration, transform) {
+  constructor(duration, transform, hudLayer) {
+    this.hudLayer = hudLayer;
     this.duration = duration;
     this.remainingDuration = duration;
     this.transform = transform.duplicate();
@@ -35,7 +58,7 @@ class Effect {
 //damage number effect subclass
 class DamageNumber extends Effect {
   constructor(attackAction) {
-    super(60, attackAction.targetEntity.transform);
+    super(60, attackAction.targetEntity.transform, false);
     this.sourceAttack = attackAction;
   }
   update() {
@@ -48,7 +71,7 @@ class DamageNumber extends Effect {
 //xp gain effect
 class XPEffect extends Effect {
   constructor(xpCount) {
-    super(60, player.transform.duplicate().add(new Pair(0, tileSize)));
+    super(60, player.transform.duplicate().add(new Pair(0, tileSize)), false);
     this.xpCount = xpCount;
   }
   update() {
@@ -59,7 +82,7 @@ class XPEffect extends Effect {
 //skill point gain effect
 class SPEffect extends Effect {
   constructor(pointCount) {
-    super(120, player.transform);
+    super(200, player.transform, false);
     this.pointCount = pointCount;
   }
   update() {
@@ -69,7 +92,7 @@ class SPEffect extends Effect {
 }
 class NewLevelEffect extends Effect {
   constructor() {
-    super(300, new Pair(cs.w / 2, cs.h / -2).add(rt.camera))
+    super(300, new Pair(cs.w / 2, cs.h / -2).add(rt.camera), false)
   }
   update() {
     this.remainingDuration--;
@@ -88,7 +111,7 @@ class NewLevelEffect extends Effect {
 }
 class WaitEffect extends Effect {
   constructor(waitAction) {
-    super(100, waitAction.actor.transform.duplicate().add(new Pair(0, tileSize / 3)));
+    super(100, waitAction.actor.transform.duplicate().add(new Pair(0, tileSize / 3)), false);
     this.actor = waitAction.actor;
   }
   update() {
@@ -100,7 +123,7 @@ class WaitEffect extends Effect {
 }
 class Death extends Effect {
   constructor(entity) {
-    super(20, entity.transform.duplicate());
+    super(20, entity.transform.duplicate(), false);
     this.entity = entity;
   }
   update() {
@@ -113,6 +136,47 @@ class Death extends Effect {
     if(this.entity.tile.visible) {
       this.entity.health.current = this.entity.health.max
       this.entity.render();
+    }
+  }
+}
+
+class IconBurst extends Effect {
+  constructor(transform, burstType, icon, iconCount) {
+    super(100, transform, true);
+    //animation type
+    this.burstType = burstType;
+    //icon object container
+    this.icons = [];
+    //create icon units
+    for(let ci = 0; ci < iconCount; ci++) {
+      //all icons have a position and sprite
+      this.icons.push({p: transform.duplicate(), s: icon.duplicate()});
+      //different types have different submodules
+      switch(this.burstType) {
+        //gravity contains velocity and rotation subtype
+        case "gravity":
+          this.icons[this.icons.length - 1].v = new Pair(tk.randomNum(-20, 20) / 10, tk.randomNum(30, 60) / 10);
+          this.icons[this.icons.length - 1].r = this.icons[this.icons.length - 1].v.x;
+          break;
+      }
+    }
+  }
+  update() {
+    this.remainingDuration--;
+    //animation control
+    switch(this.burstType) {
+      case "gravity":
+        this.icons.forEach((icon) => {
+          //update velocity and gravity
+          icon.v.y -= 0.2;
+          icon.v.x *= 0.98;
+          icon.p.add(icon.v);
+          //update sprite and render
+          icon.s.r += icon.r;
+          icon.s.alpha = this.remainingDuration / this.duration;
+          hrt.renderImage(icon.p, icon.s);
+        })
+        break;
     }
   }
 }
