@@ -120,9 +120,10 @@ class Death extends Effect {
 //DIALOG CLASS
 //dialog instances go in the dialog controller.
 class Dialog {
-  constructor(entity, text) {
+  constructor(entity, text, isThought) {
     this.entity = entity;
     this.text = text;
+    this.isThought = isThought
     //assign tilescheme
     switch(entity.eType) {
       case "player":
@@ -138,12 +139,12 @@ class Dialog {
         this.tileScheme = entityTS.nme;
         break;
     }
-    this.dialogBox = new Textbox(this.tileScheme, new Pair(cs.w / 2, cs.h * -0.85), new Pair(cs.w - tileSize, cs.h * 0.2), new TextNode("pixelFont", this.text, 0, landscape ? cs.w / 50 : cs.h / 30, "left"));
-    this.pfpBox = new BlankTile(this.tileScheme, new Pair(tileSize * 1.1, cs.h * -0.65), new Pair(tileSize * 1.2, tileSize * 1.2));
+    this.dialogBox = new Textbox(this.tileScheme, new Pair(cs.w / 2, cs.h * -0.85), new Pair(cs.w - tileSize, cs.h * 0.2), new TextNode("pixelFont", this.entity.name + ": " + this.text, 0, landscape ? cs.w / 50 : cs.h / 30, "left"));
   }
   render() {
+    //render box
     this.dialogBox.render();
-    this.pfpBox.render();
-    hrt.renderImage(tk.pairMath(this.pfpBox.transform, new Pair(0, tileSize / 3), "subtract"), this.entity.sprites.body);
+    //render speech bubble
+    rt.renderImage(tk.pairMath(this.entity.transform, new Pair(tileSize * 0.6, tileSize * 0.7), "add"), images.hud.speechBubble);
   }
 }

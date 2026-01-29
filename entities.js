@@ -4,9 +4,10 @@
 //player class controls normal entity things as well as xp.
 class Player {
   constructor(transform) {
-    //same type and eType
+    //typing
     this.type = "player";
-    this.eType = "player"
+    this.eType = "player";
+    this.name = "Marshall";
     //location data
     this.transform = transform;
     this.tile;
@@ -263,6 +264,7 @@ class NPC {
     this.path = null;
     //subclass specific
     this.type;
+    this.name;
     //time elapsed by one tile movement
     this.moveTime;
     //weapon slot
@@ -392,6 +394,7 @@ class Michael extends NPC {
   constructor(transform, tile) {
     super(transform, tile, images.moles.michael);
     this.type = "michael mole";
+    this.name = "Michael";
     //time elapsed by one tile movement
     this.moveTime = 1;
     //weapon slot
@@ -420,17 +423,17 @@ class Michael extends NPC {
     switch(this.parentLevel.tutorialStage) {
       case 3:
         if(this.tile.index.isEqualTo(tk.pairMath(player.tile.index, new Pair(0, 1), "add"))) {
-          dialogController.queued.push(new Dialog(this, "Hello Marshall! I'm happy to see that you are finally up."));
-          dialogController.queued.push(new Dialog(this, "I am sure you certainly had quite the adventure last night."));
-          dialogController.queued.push(new Dialog(player, "*What does he mean? Last night I was up trying to beat my personal record on Molesweeper.*"));
-          dialogController.queued.push(new Dialog(player, "What I was doing last night?"));
-          dialogController.queued.push(new Dialog(this, "Yes, what were you doing last night Marshall?"));
-          dialogController.queued.push(new Dialog(this, "I certainly hope it doesn't involve stealing rations from the family..."));
-          dialogController.queued.push(new Dialog(player, "Stealing? Why would I steal the rations?"));
-          dialogController.queued.push(new Dialog(this, "We all know you are a growing boy Marshall!"));
-          dialogController.queued.push(new Dialog(this, "Are you sure you weren't a little hungry after dinner and decided to take a little more?"));
-          dialogController.queued.push(new Dialog(player, "Of course not, I would never."));
-          dialogController.queued.push(new Dialog(this, "I certainly hope not. You know what happens to those who steal rations..."));
+          dialogController.queued.push(new Dialog(this, "Hello Marshall! I'm happy to see that you are finally up.", false));
+          dialogController.queued.push(new Dialog(this, "I am sure you certainly had quite the adventure last night.", false));
+          dialogController.queued.push(new Dialog(player, "*What does he mean? Last night I was up trying to beat my personal record on Molesweeper.*", true));
+          dialogController.queued.push(new Dialog(player, "What I was doing last night?", false));
+          dialogController.queued.push(new Dialog(this, "Yes, what were you doing last night Marshall?", false));
+          dialogController.queued.push(new Dialog(this, "I certainly hope it doesn't involve stealing rations from the family...", false));
+          dialogController.queued.push(new Dialog(player, "Stealing? Why would I steal the rations?", false));
+          dialogController.queued.push(new Dialog(this, "We all know you are a growing boy Marshall!", false));
+          dialogController.queued.push(new Dialog(this, "Are you sure you weren't a little hungry after dinner and decided to take a little more?", false));
+          dialogController.queued.push(new Dialog(player, "Of course not, I would never.", false));
+          dialogController.queued.push(new Dialog(this, "I certainly hope not. You know what happens to those who steal rations...", false));
           this.parentLevel.tutorialStage++;
         }
         return new Wait(this);
@@ -443,6 +446,7 @@ class Minnie extends NPC {
   constructor(transform, tile) {
     super(transform, tile, images.moles.minnie);
     this.type = "minnie mole";
+    this.name = "Minnie";
     //time elapsed by one tile movement
     this.moveTime = 1;
     //weapon slot
@@ -475,19 +479,19 @@ class Minnie extends NPC {
   getInteraction() {
     switch(this.parentLevel.tutorialStage) {
       case 1:
-        dialogController.queued.push(new Dialog(this, "Dad has asked me to wake you for an emergency family meeting."));
-        dialogController.queued.push(new Dialog(this, "Get ready and meet us in the family mole room. QUICK!"));
-        dialogController.queued.push(new Dialog(player, "*Click on tiles to explore. Try to find the family room!*"));
+        dialogController.queued.push(new Dialog(this, "Dad has asked me to wake you for an emergency family meeting.", false));
+        dialogController.queued.push(new Dialog(this, "Get ready and meet us in the family mole room. QUICK!", false));
+        dialogController.queued.push(new Dialog(player, "*Click on tiles to explore. Try to find the family room!*", true));
         this.parentLevel.tutorialStage++;
     }
   }
   runTurn() {
     switch(this.parentLevel.tutorialStage) {
       case 0:
-        dialogController.queued.push(new Dialog(this, "... marshall... MARSHALL!"));
-        dialogController.queued.push(new Dialog(player, "... Nnnggh... Huh?"));
-        dialogController.queued.push(new Dialog(this, "Marshall, you need to get out of bed quickly!"));
-        dialogController.queued.push(new Dialog(player, "*Click on Minnie to go talk to her*"));
+        dialogController.queued.push(new Dialog(this, "... marshall... MARSHALL!", false));
+        dialogController.queued.push(new Dialog(player, "... Nnnggh... Huh?", false));
+        dialogController.queued.push(new Dialog(this, "Marshall, you need to get out of bed quickly!", false));
+        dialogController.queued.push(new Dialog(player, "*Click on Minnie to go talk to her*", true));
         this.parentLevel.tutorialStage++;
         return new Wait(this);
       case 2:
@@ -518,6 +522,7 @@ class Maxwell extends NPC {
   constructor(transform, tile) {
     super(transform, tile, images.moles.maxwell);
     this.type = "maxwell mole";
+    this.name = "Maxwell";
     //time elapsed by one tile movement
     this.moveTime = 1;
     //weapon slot
@@ -556,6 +561,7 @@ class Magnolia extends NPC {
   constructor(transform, tile) {
     super(transform, tile, images.moles.magnolia);
     this.type = "magnolia mole";
+    this.name = "Magnolia";
     //time elapsed by one tile movement
     this.moveTime = 1;
     //weapon slot
@@ -853,6 +859,7 @@ class WigglyWorm extends Enemy {
   constructor(transform, tile) {
     super(transform, tile, images.enemies.wigglyWorm);
     this.type = "wiggly worm";
+    this.name = "Wiggly Worm";
     this.moveTime = 1;
     this.xpValue = tk.randomNum(3, 6);
     this.weapon = null;

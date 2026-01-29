@@ -53,7 +53,8 @@ const images = {
   hud: {
     player: new Img(tk.generateImage("Assets/HUD/player.png"), 1, 0, 0, 0, hudTileSize * 3, hudTileSize, false, false),
     stopWait: new Sprite(tk.generateImage("Assets/HUD/stopWait.png"), 1, 0, 0, 0, hudTileSize, hudTileSize, false, false, 32, 32),
-    exit: new Img(tk.generateImage("Assets/HUD/exit.png"), 1, 0, 0, 0, hudTileSize, hudTileSize, false, false)
+    exit: new Img(tk.generateImage("Assets/HUD/exit.png"), 1, 0, 0, 0, hudTileSize, hudTileSize, false, false),
+    speechBubble: new Sprite(tk.generateImage("Assets/HUD/speechBubble.png"), 1, 0, 0, 0, hudTileSize, hudTileSize, false, false, 32, 32)
   },
   moles: {
     marshall: {
@@ -171,8 +172,14 @@ const bc = {
 const dialogController = {
   queued: [],
   update: () => {
+    //update dialog
     if(dialogController.queued.length > 0) {
+      //render dialog
       dialogController.queued[0].render();
+      //update bubble
+      images.hud.speechBubble.setActive(new Pair(dialogController.queued[0].isThought ? 1 : 0, 0));
+      images.hud.speechBubble.y = Math.sin(ec / 20) * 3;
+      //cycle
       if(et.getClick("left") && bc.ready()) {
         dialogController.queued.shift();
       }
