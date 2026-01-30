@@ -107,7 +107,7 @@ class EventTracker {
       this.pressedButtons.splice(this.pressedButtons.indexOf(e.button), 1);
     });
     document.addEventListener("touchstart", (e) => {
-      [this.cursor.x, this.cursor.y] = [(e.touches[0].clientX - this.cRect.left) * (cs.element.width / this.cRect.width), (e.touches[0].clientY - this.cRect.top) * (cs.element.height / this.cRect.height) * -1];
+      [this.cursor.x, this.cursor.y] = [(e.touches[e.touches.length - 1].clientX - this.cRect.left) * (cs.element.width / this.cRect.width), (e.touches[e.touches.length - 1].clientY - this.cRect.top) * (cs.element.height / this.cRect.height) * -1];
       this.pressedButtons.push(0);
     });
     document.addEventListener("touchend", () => {
@@ -116,7 +116,7 @@ class EventTracker {
   }
   //query dynamic cursor position
   dCursor(renderTool) {
-    return new Pair(this.cursor.x + renderTool.camera.x, this.cursor.y + renderTool.camera.y);
+    return new Pair((this.cursor.x * rt.zoom) + renderTool.camera.x, (this.cursor.y * rt.zoom) + renderTool.camera.y);
   }
   //get key presses
   getKey(name) {
