@@ -75,6 +75,7 @@ class EventTracker {
     //access values
     this.pressedKeys = [];
     this.pressedButtons = [];
+    this.activeTouch = false;
     this.cursor = new Pair(0, 0);
     this.cRect = cs.element.getBoundingClientRect();
     //prevention listeners
@@ -107,10 +108,23 @@ class EventTracker {
       this.pressedButtons.splice(this.pressedButtons.indexOf(e.button), 1);
     });
     document.addEventListener("touchstart", (e) => {
-      [this.cursor.x, this.cursor.y] = [(e.touches[e.touches.length - 1].clientX - this.cRect.left) * (cs.element.width / this.cRect.width), (e.touches[e.touches.length - 1].clientY - this.cRect.top) * (cs.element.height / this.cRect.height) * -1];
+      if(!this.activeTouch) {
+        this.activeTouch = e.touches[0].identifier;
+        [this.cursor.x, this.cursor.y] = [(e.touches[0].clientX - this.cRect.left) * (cs.element.width / this.cRect.width), (e.touches[0].clientY - this.cRect.top) * (cs.element.height / this.cRect.height) * -1];
+      }
       this.pressedButtons.push(0);
     });
+    document.addEventListener("touchMove", (e) => {
+      let touchObj;
+      for(touchScan = 0; touchScan < e.touches.length; touchScan++) {
+        if(e.touches[touchScan].identifier = this.activeTouch) {
+          touchObj = e.touches[touchScan];
+        }
+      }
+      [this.cursor.x, this.cursor.y] = [(touchObj.clientX - this.cRect.left) * (cs.element.width / this.cRect.width), (touchObj.clientY - this.cRect.top) * (cs.element.height / this.cRect.height) * -1];
+    });
     document.addEventListener("touchend", () => {
+      this.activeTouch = false;
       this.pressedButtons.splice(this.pressedButtons.indexOf(0), 1);
     });
   }
