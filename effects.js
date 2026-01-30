@@ -156,7 +156,7 @@ class IconBurst extends Effect {
         //gravity contains velocity and rotation subtype
         case "gravity":
           this.icons[this.icons.length - 1].v = new Pair(tk.randomNum(-20, 20) / 10, tk.randomNum(30, 60) / 10);
-          this.icons[this.icons.length - 1].r = this.icons[this.icons.length - 1].v.x;
+          this.icons[this.icons.length - 1].r = this.icons[this.icons.length - 1].v.x * tk.randomNum(1, 4);
           break;
       }
     }
@@ -168,7 +168,7 @@ class IconBurst extends Effect {
       case "gravity":
         this.icons.forEach((icon) => {
           //update velocity and gravity
-          icon.v.y -= 0.2;
+          icon.v.y -= 0.3;
           icon.v.x *= 0.98;
           icon.p.add(icon.v);
           //update sprite and render

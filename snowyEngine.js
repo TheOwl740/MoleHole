@@ -434,11 +434,11 @@ class RenderTool {
     this.canvas.cx.textBaseline = "middle";
     this.canvas.cx.save();
     this.canvas.cx.scale(1, -1);
-    this.canvas.cx.translate(pair.x, pair.y * -1);
+    this.canvas.cx.translate((pair.x - this.camera.x) / this.zoom, (pair.y - this.camera.y) / this.zoom * -1);
     this.canvas.cx.rotate(text.r * (Math.PI / 180));
     this.canvas.cx.globalAlpha = fill.alpha;
     [this.canvas.cx.font, this.canvas.cx.fillStyle] = [`${text.size / this.zoom}px ${text.font}`, fill.color];
-    this.canvas.cx.fillText(text.text, (-1 * this.camera.x / this.zoom), (this.camera.y / this.zoom));
+    this.canvas.cx.fillText(text.text, 0, 0);
     this.canvas.cx.restore();
   }
 }
