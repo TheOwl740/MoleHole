@@ -5,6 +5,7 @@
 const cs = new Canvas(document.getElementById("canvas"));
 const rt = new RenderTool(cs);
 const et = new EventTracker(cs);
+const tt = new TouchTracker(cs);
 const tk = new Toolkit();
 const hrt = new RenderTool(cs);
 let gt;
@@ -16,6 +17,8 @@ et.tabEnabled = false;
 et.rightClickEnabled = false;
 
 //GLOBAL VARIABLES
+//clicking bool
+let clicking = false;
 //freecam mode bool
 let freecam = true;
 //epoch counter (ticks since game start)
@@ -98,41 +101,35 @@ const levels = [];
 //GLOBAL OBJECTS
 //mobile drag controller
 const tapData = {
-  holdTime: 0,
-  dragging: false,
-  dragStart: null,
-  cameraStart: null,
   realClick: false,
-  rct: 0,
+  lifetime: 0,
+  cameraStart: null,
   update: () => {
-    if(!landscape) {
-      if(et.getClick("left")) {
+    switch(tt.activeTouches.length) {
+      case 0:
+        //reset
         tapData.realClick = false;
-        tapData.rct = 0;
-        tapData.holdTime++;
-        if(tapData.holdTime > 5) {
-          tapData.dragging = true;
-          rt.camera = tapData.cameraStart.duplicate().subtract(et.cursor.duplicate().subtract(tapData.dragStart));
-        } else if(tapData.holdTime < 2) {
-          tapData.dragStart = et.cursor.duplicate();
-          tapData.cameraStart = rt.camera.duplicate();
+        tapData.lifetime = 0;
+        tapData.cameraStart = null;
+        break;
+      case 1: 
+        //increment lifetime
+        tapData.lifetime++;
+        //set press/drag
+        if(tapData.lifetime > 1) {
+          if(tt.activeTouches[0].state === "press") {
+            tapData.realClick = true;
+          } else {
+            tapData.realClick = false;
+            tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
+            rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement(), "subtract");
+          }
         }
-      } else {
-        if(tapData.holdTime < 10 && tapData.holdTime > 0 && !tapData.realClick) {
-          tapData.realClick = true;
-          tapData.rct = 0;
-        } else if(tapData.realClick) {
-          tapData.rct++;
-        }
-        if(tapData.rct > 10) {
-          tapData.realClick = false;
-        }
-        tapData.dragStart = null;
-        tapData.holdTime = 0;
-        tapData.dragging = false;
-      }
+        break;
     }
-  },
+    //update clicking
+    clicking = tapData.realClick || et.getClick("left");
+  }
 };
 //hud button data
 const buttonData = {
@@ -181,7 +178,7 @@ const dialogController = {
       images.hud.speechBubble.setActive(new Pair(dialogController.queued[0].isThought ? 1 : 0, 0));
       images.hud.speechBubble.y = Math.sin(ec / 20) * 3;
       //cycle
-      if(et.getClick("left") && bc.ready()) {
+      if(clicking && bc.ready()) {
         dialogController.queued.shift();
       }
     }

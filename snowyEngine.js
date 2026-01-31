@@ -107,26 +107,6 @@ class EventTracker {
     document.addEventListener("mouseup", (e) => {
       this.pressedButtons.splice(this.pressedButtons.indexOf(e.button), 1);
     });
-    document.addEventListener("touchstart", (e) => {
-      if(!this.activeTouch) {
-        this.activeTouch = e.touches[0].identifier;
-        [this.cursor.x, this.cursor.y] = [(e.touches[0].clientX - this.cRect.left) * (cs.element.width / this.cRect.width), (e.touches[0].clientY - this.cRect.top) * (cs.element.height / this.cRect.height) * -1];
-      }
-      this.pressedButtons.push(0);
-    });
-    document.addEventListener("touchMove", (e) => {
-      let touchObj;
-      for(touchScan = 0; touchScan < e.touches.length; touchScan++) {
-        if(e.touches[touchScan].identifier = this.activeTouch) {
-          touchObj = e.touches[touchScan];
-        }
-      }
-      [this.cursor.x, this.cursor.y] = [(touchObj.clientX - this.cRect.left) * (cs.element.width / this.cRect.width), (touchObj.clientY - this.cRect.top) * (cs.element.height / this.cRect.height) * -1];
-    });
-    document.addEventListener("touchend", () => {
-      this.activeTouch = false;
-      this.pressedButtons.splice(this.pressedButtons.indexOf(0), 1);
-    });
   }
   //query dynamic cursor position
   dCursor(renderTool) {
@@ -141,7 +121,7 @@ class EventTracker {
     switch(button) {
       case "left":
         return this.pressedButtons.includes(0);
-      case "center":
+      case "wheel":
         return this.pressedButtons.includes(1);
       case "right":
         return this.pressedButtons.includes(2);
@@ -149,6 +129,103 @@ class EventTracker {
         return this.pressedButtons.includes(3);
       case "aux2":
         return this.pressedButtons.includes(4);
+    }
+  }
+}
+//tracks touch events for mobile devices
+class TouchTracker {
+  constructor(cs) {
+    //type
+    this.type = "touchTracker";
+    //bounding client for coord calculations
+    this.cRect = cs.element.getBoundingClientRect();
+    //touch data
+    this.activeTouches = [];
+    //listeners
+    //new finger placed
+    document.addEventListener("touchstart", (e) => {
+      for(let eTouchIndex = 0; eTouchIndex < e.touches.length; eTouchIndex++) {
+        let currentTouch = this.getTouchIndex(e.touches[eTouchIndex].identifier)
+        if(currentTouch === null) {
+          this.activeTouches.push(new TouchNode(e.touches[eTouchIndex].identifier, new Pair((e.touches[eTouchIndex].clientX - this.cRect.left) * (cs.element.width / this.cRect.width), (e.touches[eTouchIndex].clientY - this.cRect.top) * (cs.element.height / this.cRect.height) * -1)));
+        }
+      }
+    });
+    //finger moved
+    document.addEventListener("touchmove", (e) => {
+      //reset transforms and ping touch objects
+      for(let eTouchIndex = 0; eTouchIndex < e.touches.length; eTouchIndex++) {
+        let currentTouch = this.getTouchIndex(e.touches[eTouchIndex].identifier)
+        this.activeTouches[currentTouch].transform = new Pair((e.touches[eTouchIndex].clientX - this.cRect.left) * (cs.element.width / this.cRect.width), (e.touches[eTouchIndex].clientY - this.cRect.top) * (cs.element.height / this.cRect.height) * -1);
+        this.activeTouches[currentTouch].update();
+      }
+    });
+    //finger removed
+    document.addEventListener("touchend", (e) => {
+      //remove all removed touches
+      let verified;
+      for(let touchIndex = 0; touchIndex < this.activeTouches.length; touchIndex++) {
+        verified = false
+        for(let eTouchIndex = 0; eTouchIndex < e.touches.length; eTouchIndex++) {
+          if(this.activeTouches[touchIndex].identifier === e.touches[eTouchIndex].identifier) {
+            verified = true;
+          }
+        }
+        if(!verified) {
+          this.activeTouches.splice(touchIndex, 1);
+          touchIndex--;
+        }
+      }
+    });
+    //unexpected system cancel (same logic as removal)
+    document.addEventListener("touchcancel", (e) => {
+      //remove all removed touches
+      let verified;
+      for(let touchIndex = 0; touchIndex < this.activeTouches.length; touchIndex++) {
+        verified = false
+        for(let eTouchIndex = 0; eTouchIndex < e.touches.length; eTouchIndex++) {
+          if(this.activeTouches[touchIndex].identifier === e.touches[eTouchIndex].identifier) {
+            verified = true;
+          }
+        }
+        if(!verified) {
+          this.activeTouches.splice(touchIndex, 1);
+          touchIndex--;
+        }
+      }
+    });
+  }
+  getTouchIndex(identifier) {
+    for(let touchIndex = 0; touchIndex < this.activeTouches.length; touchIndex++) {
+      if(this.activeTouches[touchIndex].identifier === identifier) {
+        return touchIndex;
+      }
+    }
+    return null;
+  }
+}
+//touch objects for tracking individual touches
+class TouchNode {
+  constructor(identifier, sTransform) {
+    this.type = "touchNode";
+    //current state
+    this.state = "press";
+    //event id
+    this.identifier = identifier;
+    //start transform
+    this.sTransform = sTransform;
+    //current transform
+    this.transform = sTransform;
+  }
+  dTransform(rt) {
+    return new Pair((this.transform.x * rt.zoom) + rt.camera.x, (this.transform.y * rt.zoom) + rt.camera.y);
+  }
+  getMovement() {
+    return new Pair(this.transform.x - this.sTransform.x, this.transform.y - this.sTransform.y);
+  }
+  update() {
+    if(this.getMovement().distToOrigin() > 5) {
+      this.state = "drag";
     }
   }
 }
@@ -327,7 +404,7 @@ class RenderTool {
     //save canvas position
     this.canvas.cx.save();
     //translate canvas to rectangle and rotate
-    this.canvas.cx.translate(pair.x - this.camera.x, pair.y - this.camera.y);
+    this.canvas.cx.translate((pair.x - this.camera.x) / this.zoom, (pair.y - this.camera.y) / this.zoom);
     this.canvas.cx.rotate(rectangle.r * (Math.PI / 180));
     //draw
     this.canvas.cx.beginPath();

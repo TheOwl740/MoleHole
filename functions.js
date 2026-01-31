@@ -14,7 +14,7 @@ function updateHomescreen() {
   rt.renderText(new Pair(cs.w / 2, cs.h / -3), new TextNode("pixelFont", "MoleHole", 0, landscape ? cs.w / 30 : cs.h / 20, "center"), new Fill("#EEEEFF", 1));
   rt.renderText(new Pair(cs.w / 2, (cs.h / -1.5) - (landscape ? cs.w / 40 : cs.h / 30)), new TextNode("pixelFont", `- ${landscape ? "click" : "tap"} anywhere to begin -`, 0, landscape ? cs.w / 50 : cs.h / 30, "center"), new Fill("#EEEEFF", 1));
   //game start
-  if(et.getClick("left") && bc.ready()) {
+  if(et.getClick("left") || tapData.realClick && bc.ready()) {
     loadLevel(0);
   }
 }
@@ -101,12 +101,12 @@ function updateHUD() {
   //update dialogs
   dialogController.update();
   //stop (wait controlled in player runturn)
-  if(tk.detectCollision(et.cursor, buttonData.stopWait.collider()) && (landscape ? et.getClick("left") : tapData.realClick) && (player.targetIndex !== null)) {
+  if(player.targetIndex !== null && clicking && tk.detectCollision(tapData.realClick ? tt.activeTouches[0].transform : et.cursor, buttonData.stopWait.collider())) {
     player.targetIndex = null;
     player.path = null;
   }
   //skill tree access
-  if(tk.detectCollision(et.cursor, buttonData.skillTree.collider()) && (landscape ? et.getClick("left") : tapData.realClick)) {
+  if(player.targetIndex !== null && clicking && tk.detectCollision(tapData.realClick ? tt.activeTouches[0].transform : et.cursor, buttonData.skillTree.collider())) {
     gameState = "skillTree";
   }
 }
@@ -127,7 +127,7 @@ function updateFailscreen() {
   rt.renderText(new Pair(cs.w / 2, cs.h / -2), new TextNode("pixelFont", "Game Over", 0, landscape ? cs.w / 40 : cs.h / 20, "center"), new Fill("#EEEEFF", 1));
   rt.renderText(new Pair(cs.w / 2, (cs.h / -2) - (landscape ? cs.w / 40 : cs.h / 30)), new TextNode("pixelFont", `- ${landscape ? "click" : "tap"} anywhere for main menu -`, 0, landscape ? cs.w / 80 : cs.h / 40, "center"), new Fill("#EEEEFF", 1));
   //game start
-  if(et.getClick("left") && bc.ready()) {
+  if(clicking && bc.ready()) {
     gameState = "homescreen";
   }
 }
@@ -137,7 +137,7 @@ function updateSkillTree() {
   //exit button render
   hrt.renderImage(buttonData.exit.transform(), images.hud.exit);
   //exit button function
-  if((tk.detectCollision(et.cursor, buttonData.exit.collider()) && (landscape ? et.getClick("left") : tapData.realClick)) && bc.ready()) {
+  if(clicking && tk.detectCollision(tapData.realClick ? tt.activeTouches[0].transform : et.cursor, buttonData.exit.collider())) {
     gameState = "inGame";
   }
   //main text and points

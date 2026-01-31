@@ -133,7 +133,7 @@ class Player {
     //set last position
     this.lastPosition = this.tile.index;
     //wait action
-    if(this.targetIndex === null && ((tk.detectCollision(et.cursor, buttonData.stopWait.collider()) && (landscape ? et.getClick("left") : tapData.realClick)) && bc.ready())) {
+    if(this.targetIndex === null && clicking && tk.detectCollision(tapData.realClick ? tt.activeTouches[0].transform : et.cursor, buttonData.stopWait.collider())) {
       return new Wait(this);
     }
     //check if at target
@@ -153,9 +153,9 @@ class Player {
       }
     });
     //if there is no target and there is a targeting click
-    if(this.targetIndex === null && (landscape ? et.getClick("left") : tapData.realClick) && bc.ready()) {
+    if(this.targetIndex === null && (landscape ? et.getClick("left") : tapData.realClick)) {
       //get tile at click
-      let clickedTile = currentLevel.getTile(et.dCursor(rt));
+      let clickedTile = currentLevel.getTile(landscape ? et.dCursor(rt) : tt.activeTouches[0].dTransform(rt));
       //if valid tile
       if(clickedTile?.type !== "wall" && clickedTile?.revealed) {
         this.targetIndex = clickedTile.index;
