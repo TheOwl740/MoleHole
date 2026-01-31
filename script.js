@@ -11,6 +11,9 @@ function update() {
     tapData.update();
   }
   //update game based on state
+  //update clicking
+  clicking = (tapData.realClick || et.getClick("left"));
+  //state based function timeline
   switch(gameState) {
     case "homescreen":
       updateHomescreen()

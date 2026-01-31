@@ -179,33 +179,18 @@ function drill(startTile, steps) {
   }
 }
 //updates zoom on wheel event
-function updateZoom(e, dist) {
+function updateZoom(e) {
   if(gameState === "inGame") {
-    if(dist !== null) {
-      let zoomFactor = dist / (cs.w / 2);
-      if(zoomFactor > 0) {
-        if(rt.zoom < 3) {
-          rt.camera.add(new Pair(zoomFactor * (cs.w / -2), zoomFactor * (cs.h / 2)));
-          rt.zoom += zoomFactor;
-        } 
-      } else {
-        if(rt.zoom > 1) {
-          rt.camera.add(new Pair(zoomFactor * (cs.w / -2), zoomFactor * (cs.h / 2)));
-          rt.zoom += zoomFactor;
-        }
-      }
+    let zoomFactor = e.deltaY / 1000;
+    if(zoomFactor > 0) {
+      if(rt.zoom < 3) {
+        rt.camera.add(new Pair(zoomFactor * (cs.w / -2), zoomFactor * (cs.h / 2)));
+        rt.zoom += zoomFactor;
+      } 
     } else {
-      let zoomFactor = e.deltaY / 1000;
-      if(zoomFactor > 0) {
-        if(rt.zoom < 3) {
-          rt.camera.add(new Pair(zoomFactor * (cs.w / -2), zoomFactor * (cs.h / 2)));
-          rt.zoom += zoomFactor;
-        } 
-      } else {
-        if(rt.zoom > 1) {
-          rt.camera.add(new Pair(zoomFactor * (cs.w / -2), zoomFactor * (cs.h / 2)));
-          rt.zoom += zoomFactor;
-        }
+      if(rt.zoom > 1) {
+        rt.camera.add(new Pair(zoomFactor * (cs.w / -2), zoomFactor * (cs.h / 2)));
+        rt.zoom += zoomFactor;
       }
     }
   }

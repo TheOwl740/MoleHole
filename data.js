@@ -127,11 +127,22 @@ const tapData = {
         }
         break;
       case 2:
-        updateZoom(null, tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance"))
-        break
+        if(gameState === "inGame") {
+          let zoomFactor = (tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance")) / 1000;
+          if(zoomFactor > 0) {
+            if(rt.zoom < 3) {
+              rt.camera.add(new Pair(zoomFactor * (cs.w / -2), zoomFactor * (cs.h / 2)));
+              rt.zoom += zoomFactor;
+            } 
+          } else {
+            if(rt.zoom > 1) {
+              rt.camera.add(new Pair(zoomFactor * (cs.w / -2), zoomFactor * (cs.h / 2)));
+              rt.zoom += zoomFactor;
+            }
+          }
+        }
+        break;
     }
-    //update clicking
-    clicking = tapData.realClick || et.getClick("left");
   }
 };
 //hud button data
