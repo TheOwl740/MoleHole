@@ -110,22 +110,28 @@ const tapData = {
       case 0:
         //reset
         tapData.realClick = false;
+        tapData.lifetime = 0;
         tapData.cameraStart = null;
         tapData.zoomStart = null;
         break;
-      case 1: 
+      case 1:
+        //increment lifetime
+        tapData.lifetime++;
         //set press/drag
-        if(tt.activeTouches[0].state === "press") {
-          tapData.realClick = true;
-        } else {
-          tapData.realClick = false;
-          tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
-          rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement(), "subtract");
+        if(tapData.lifetime > 0) {
+          if(tt.activeTouches[0].state === "press") {
+            tapData.realClick = true;
+          } else {
+            tapData.realClick = false;
+            tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
+            rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement(), "subtract");
+          }
         }
         break;
       case 2:
         tapData.zoomStart = tapData.zoomStart ? tapData.zoomStart : rt.zoom;
         tapData.realClick = false;
+        tapData.lifetime = -2;
         if(gameState === "inGame") {
           tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
           rt.zoom = ((tk.pairMath(tt.activeTouches[0].transform, tt.activeTouches[1].transform, "distance") - tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance")) / 1000) + 1;
