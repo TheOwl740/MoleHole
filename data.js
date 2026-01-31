@@ -126,6 +126,9 @@ const tapData = {
           }
         }
         break;
+      case 2:
+        updateZoom(null, tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance"))
+        break
     }
     //update clicking
     clicking = tapData.realClick || et.getClick("left");
