@@ -101,12 +101,12 @@ function updateHUD() {
   //update dialogs
   dialogController.update();
   //stop (wait controlled in player runturn)
-  if(player.targetIndex !== null && clicking && tk.detectCollision(tapData.realClick ? tt.activeTouches[0].transform : et.cursor, buttonData.stopWait.collider())) {
+  if(player.targetIndex !== null && clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.stopWait.collider())) {
     player.targetIndex = null;
     player.path = null;
   }
   //skill tree access
-  if(player.targetIndex !== null && clicking && tk.detectCollision(tapData.realClick ? tt.activeTouches[0].transform : et.cursor, buttonData.skillTree.collider())) {
+  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.skillTree.collider())) {
     gameState = "skillTree";
   }
 }
@@ -137,7 +137,7 @@ function updateSkillTree() {
   //exit button render
   hrt.renderImage(buttonData.exit.transform(), images.hud.exit);
   //exit button function
-  if(clicking && tk.detectCollision(tapData.realClick ? tt.activeTouches[0].transform : et.cursor, buttonData.exit.collider())) {
+  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.exit.collider())) {
     gameState = "inGame";
   }
   //main text and points

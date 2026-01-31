@@ -105,6 +105,7 @@ const tapData = {
   lifetime: 0,
   cameraStart: null,
   zoomStart: null,
+  rcObj: null,
   update: () => {
     switch(tt.activeTouches.length) {
       case 0:
@@ -119,6 +120,7 @@ const tapData = {
           tapData.realClick = true;
         } else {
           tapData.realClick = false;
+          tapData.rcObj = null;
         }
         break;
       case 1:
@@ -128,6 +130,7 @@ const tapData = {
           } else {
             tapData.lifetime = 0;
           }
+          tapData.rcObj = tt.activeTouches[0];
           tapData.zoomStart = null;
           tapData.realClick = false;
           tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
