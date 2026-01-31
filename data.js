@@ -131,16 +131,16 @@ const tapData = {
       case 2:
         tapData.zoomStart = tapData.zoomStart ? tapData.zoomStart : rt.zoom;
         tapData.realClick = false;
-        tapData.lifetime = -2;
+        tapData.lifetime = -5;
         if(gameState === "inGame") {
           tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
-          rt.zoom = ((tk.pairMath(tt.activeTouches[0].transform, tt.activeTouches[1].transform, "distance") - tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance")) / 1000) + 1;
+          rt.zoom = ((tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].transform, tt.activeTouches[1].transform, "distance")) / 1000) + 1;
           if(rt.zoom > 3) {
             rt.zoom = 3;
           } else if(rt.zoom < 1) {
             rt.zoom = 1;
           } else {
-            rt.camera = tk.pairMath(tapData.cameraStart, new Pair((rt.zoom - tapData.zoomStart) * (cs.w / -2), (rt.zoom - tapData.zoomStart) * (cs.h / 2)), "add").subtract(tt.activeTouches[0].getMovement());
+            rt.camera = tk.pairMath(tapData.cameraStart, new Pair((rt.zoom - tapData.zoomStart) * (cs.w / -2), (rt.zoom - tapData.zoomStart) * (cs.h / 2)), "add").subtract(tk.calcAveragePair([tt.activeTouches[0].getMovement(), tt.activeTouches[1].getMovement()]));
           }
         }
         break;
