@@ -109,11 +109,17 @@ const tapData = {
     switch(tt.activeTouches.length) {
       case 0:
         //reset
-        tapData.realClick = false;
-        tapData.lifetime = 0;
         tapData.cameraStart = null;
         tapData.zoomStart = null;
         tapData.lastCount = 0;
+        if(tapData.lifetime > 0) {
+          tapData.lifetime = -2; 
+        } else if(tapData.lifetime < 0) {
+          tapData.lifetime++;
+          tapData.realClick = true;
+        } else {
+          tapData.realClick = false;
+        }
         break;
       case 1:
         //increment lifetime
@@ -140,7 +146,7 @@ const tapData = {
           }
           tapData.zoomStart = tapData.zoomStart ? tapData.zoomStart : rt.zoom;
           tapData.realClick = false;
-          tapData.lifetime = -5;
+          tapData.lifetime = 0;
           rt.zoom = tapData.zoomStart + ((tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].transform, tt.activeTouches[1].transform, "distance")) / -500);
           if(rt.zoom > 3) {
             rt.zoom = 3;
