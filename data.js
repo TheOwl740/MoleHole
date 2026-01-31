@@ -122,6 +122,9 @@ const tapData = {
         }
         break;
       case 1:
+        if(tapData.lastCount === 2) {
+          break;
+        }
         if(tt.activeTouches[0].getMovement().distToOrigin() < 5) {
           tapData.lifetime++;
         } else {
@@ -134,13 +137,13 @@ const tapData = {
         tapData.lastCount = 1;
         break;
       case 2:
+        tapData.lifetime = 0;
+        tapData.realClick = false;
         if(gameState === "inGame") {
           if(tapData.lastCount === 1 || tapData.cameraStart === null) {
             tapData.cameraStart = rt.camera.duplicate();
           }
           tapData.zoomStart = tapData.zoomStart ? tapData.zoomStart : rt.zoom;
-          tapData.realClick = false;
-          tapData.lifetime = 0;
           rt.zoom = tapData.zoomStart + ((tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].transform, tt.activeTouches[1].transform, "distance")) / -500);
           if(rt.zoom > 3) {
             rt.zoom = 3;
