@@ -451,7 +451,7 @@ class Level {
     }
     //place initial enemies (relies on player spawn)
     for(let i = 0; i < (this.levelId * 1.5) + 5; i++) {
-      this.spawnEnemy();
+      this.spawnEnemy(true);
     }
   }
   render() {
@@ -534,7 +534,7 @@ class Level {
     }
     return retList;
   }
-  spawnEnemy() {
+  spawnEnemy(earlySpawn) {
     //decides what enemy will spawn, for weighted spawns
     let enemySeed = tk.randomNum(0, 100)
     //find a valid spawn location
@@ -546,12 +546,12 @@ class Level {
       //check for walkable floor
       if(spawnTile.type === "floor" && spawnTile.entity === null) {
         //check for player
-        if(player) {
-          if(tk.pairMath(spawnTile.index, player.tile.index, "distance") > this.visionRange * 1.5) {
+        if(earlySpawn) {
+          if(tk.pairMath(spawnTile.index, this.getTile(this.playerSpawn).index, "distance") > this.visionRange * 1.5) {
             validSpawn = true;
           }
         } else {
-          if(tk.pairMath(spawnTile.index, this.getTile(this.playerSpawn).index, "distance") > this.visionRange * 1.5) {
+          if(tk.pairMath(spawnTile.index, player.tile.index, "distance") > this.visionRange * 1.5) {
             validSpawn = true;
           }
         }

@@ -122,7 +122,9 @@ const tapData = {
         //set press/drag
         if(tapData.lifetime > 0) {
           if(tt.activeTouches[0].state === "press") {
-            tapData.realClick = true;
+            if(tapData.lifetime > 2) {
+              tapData.realClick = true;
+            }
           } else {
             tapData.realClick = false;
             tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();

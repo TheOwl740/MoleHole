@@ -224,7 +224,7 @@ class TouchNode {
     return new Pair(this.transform.x - this.sTransform.x, this.transform.y - this.sTransform.y);
   }
   update() {
-    if(this.getMovement().distToOrigin() > 5) {
+    if(this.getMovement().distToOrigin() > 3) {
       this.state = "drag";
     }
   }
