@@ -104,41 +104,37 @@ const tapData = {
   realClick: false,
   lifetime: 0,
   cameraStart: null,
+  zoomStart: null,
   update: () => {
     switch(tt.activeTouches.length) {
       case 0:
         //reset
         tapData.realClick = false;
-        tapData.lifetime = 0;
         tapData.cameraStart = null;
+        tapData.zoomStart = null;
         break;
       case 1: 
-        //increment lifetime
-        tapData.lifetime++;
         //set press/drag
-        if(tapData.lifetime > 1) {
-          if(tt.activeTouches[0].state === "press") {
-            tapData.realClick = true;
-          } else {
-            tapData.realClick = false;
-            tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
-            rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement(), "subtract");
-          }
+        if(tt.activeTouches[0].state === "press") {
+          tapData.realClick = true;
+        } else {
+          tapData.realClick = false;
+          tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
+          rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement(), "subtract");
         }
         break;
       case 2:
+        tapData.zoomStart = tapData.zoomStart ? tapData.zoomStart : rt.zoom;
+        tapData.realClick = false;
         if(gameState === "inGame") {
-          let zoomFactor = (tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance")) / 1000;
-          if(zoomFactor > 0) {
-            if(rt.zoom < 3) {
-              rt.camera.add(new Pair(zoomFactor * (cs.w / -2), zoomFactor * (cs.h / 2)));
-              rt.zoom += zoomFactor;
-            } 
+          tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
+          rt.zoom = ((tk.pairMath(tt.activeTouches[0].transform, tt.activeTouches[1].transform, "distance") - tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance")) / 1000) + 1;
+          if(rt.zoom > 3) {
+            rt.zoom = 3;
+          } else if(rt.zoom < 1) {
+            rt.zoom = 1;
           } else {
-            if(rt.zoom > 1) {
-              rt.camera.add(new Pair(zoomFactor * (cs.w / -2), zoomFactor * (cs.h / 2)));
-              rt.zoom += zoomFactor;
-            }
+            rt.camera = tk.pairMath(tapData.cameraStart, new Pair((rt.zoom - tapData.zoomStart) * (cs.w / -2), (rt.zoom - tapData.zoomStart) * (cs.h / 2)), "add").subtract(tt.activeTouches[0].getMovement());
           }
         }
         break;
