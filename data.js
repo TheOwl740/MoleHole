@@ -122,19 +122,18 @@ const tapData = {
         }
         break;
       case 1:
-        if(tapData.lastCount === 2) {
-          break;
+        if(tapData.lastCount !== 2) {
+          if(tt.activeTouches[0].getMovement().distToOrigin() < 5) {
+            tapData.lifetime++;
+          } else {
+            tapData.lifetime = 0;
+          }
+          tapData.zoomStart = null;
+          tapData.realClick = false;
+          tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
+          rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement(), "subtract");
+          tapData.lastCount = 1;
         }
-        if(tt.activeTouches[0].getMovement().distToOrigin() < 5) {
-          tapData.lifetime++;
-        } else {
-          tapData.lifetime = 0;
-        }
-        tapData.zoomStart = null;
-        tapData.realClick = false;
-        tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
-        rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement(), "subtract");
-        tapData.lastCount = 1;
         break;
       case 2:
         tapData.lifetime = 0;
