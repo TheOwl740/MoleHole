@@ -122,21 +122,15 @@ const tapData = {
         }
         break;
       case 1:
-        //increment lifetime
-        tapData.lifetime++;
-        tapData.zoomStart = null;
-        //set press/drag
-        if(tapData.lifetime > 0) {
-          if(tt.activeTouches[0].state === "press") {
-            if(tapData.lifetime > 2) {
-              tapData.realClick = true;
-            }
-          } else {
-            tapData.realClick = false;
-            tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
-            rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement(), "subtract");
-          }
+        if(tt.activeTouches[0].getMovement().distToOrigin() < 5) {
+          tapData.lifetime++;
+        } else {
+          tapData.lifetime = 0;
         }
+        tapData.zoomStart = null;
+        tapData.realClick = false;
+        tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
+        rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement(), "subtract");
         tapData.lastCount = 1;
         break;
       case 2:
