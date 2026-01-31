@@ -118,6 +118,7 @@ const tapData = {
       case 1:
         //increment lifetime
         tapData.lifetime++;
+        tapData.zoomStart = null;
         //set press/drag
         if(tapData.lifetime > 0) {
           if(tt.activeTouches[0].state === "press") {
@@ -138,7 +139,7 @@ const tapData = {
           tapData.zoomStart = tapData.zoomStart ? tapData.zoomStart : rt.zoom;
           tapData.realClick = false;
           tapData.lifetime = -5;
-          rt.zoom = ((tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].transform, tt.activeTouches[1].transform, "distance")) / 1000) + 3;
+          rt.zoom = tapData.zoomStart + ((tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].transform, tt.activeTouches[1].transform, "distance")) / -500);
           if(rt.zoom > 3) {
             rt.zoom = 3;
           } else if(rt.zoom < 1) {
