@@ -134,7 +134,7 @@ const tapData = {
           tapData.zoomStart = null;
           tapData.realClick = false;
           tapData.cameraStart = tapData.cameraStart ? tapData.cameraStart : rt.camera.duplicate();
-          rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement(), "subtract");
+          rt.camera = tk.pairMath(tapData.cameraStart, tt.activeTouches[0].getMovement().multiply(rt.zoom), "subtract");
           tapData.lastCount = 1;
         }
         break;
@@ -152,7 +152,7 @@ const tapData = {
           } else if(rt.zoom < 1) {
             rt.zoom = 1;
           } else {
-            rt.camera = tk.pairMath(tapData.cameraStart, new Pair((rt.zoom - tapData.zoomStart) * (cs.w / -2), (rt.zoom - tapData.zoomStart) * (cs.h / 2)), "add").subtract(tk.calcAveragePair([tt.activeTouches[0].getMovement(), tt.activeTouches[1].getMovement()]));
+            rt.camera = tk.pairMath(tapData.cameraStart, new Pair((rt.zoom - tapData.zoomStart) * (cs.w / -2), (rt.zoom - tapData.zoomStart) * (cs.h / 2)), "add").subtract(tk.calcAveragePair([tt.activeTouches[0].getMovement(), tt.activeTouches[1].getMovement()]));  
           }
         }
         tapData.lastCount = 2;

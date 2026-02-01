@@ -23,16 +23,16 @@ function updateCamera() {
   //in freecam mode
   if(freecam) {
     if(et.getKey("a")) {
-      rt.camera.x -= 10;
+      rt.camera.x -= 10 * rt.zoom;
     }
     if(et.getKey("d")) {
-      rt.camera.x += 10;
+      rt.camera.x += 10 * rt.zoom;
     }
     if(et.getKey("w")) {
-      rt.camera.y += 10;
+      rt.camera.y += 10 * rt.zoom;
     }
     if(et.getKey("s")) {
-      rt.camera.y -= 10;
+      rt.camera.y -= 10 * rt.zoom;
     }
   //in player locked mode
   } else {
