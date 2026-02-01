@@ -146,7 +146,7 @@ const tapData = {
             tapData.cameraStart = rt.camera.duplicate();
           }
           tapData.zoomStart = tapData.zoomStart ? tapData.zoomStart : rt.zoom;
-          rt.zoom = tapData.zoomStart + ((tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].transform, tt.activeTouches[1].transform, "distance")) / -500);
+          rt.zoom = tapData.zoomStart - ((tk.pairMath(tt.activeTouches[0].sTransform, tt.activeTouches[1].sTransform, "distance") - tk.pairMath(tt.activeTouches[0].transform, tt.activeTouches[1].transform, "distance")) / -500);
           if(rt.zoom > 3) {
             rt.zoom = 3;
           } else if(rt.zoom < 1) {
