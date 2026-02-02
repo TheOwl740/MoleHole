@@ -561,6 +561,13 @@ class Level {
       case 1:
         this.enemies.push(new WigglyWorm(spawnTile.transform.duplicate(), spawnTile));
         break;
+      case 2:
+        if(enemySeed > 50) {
+          this.enemies.push(new WigglyWorm(spawnTile.transform.duplicate(), spawnTile));
+        } else {
+          this.enemies.push(new Spiderling(spawnTile.transform.duplicate(), spawnTile));
+        }
+        break;
     }
   }
   reshade() {

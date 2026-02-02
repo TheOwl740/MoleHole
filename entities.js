@@ -217,12 +217,14 @@ class Player {
   addXP(count) {
     this.xp += count;
     this.health.regenPoints += count * 10;
-    let points = Math.floor(this.xp / 20)
+    let points = Math.floor(this.xp / 20);
     if(points > 0) {
       currentEC.add(new SPEffect(points));
       this.skillPoints += points;
       this.xp -= points * 20;
-      currentEC.add(new IconBurst(tk.pairMath(buttonData.skillTree.transform(), new Pair(0, hudTileSize / -2), "add"), "gravity", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 10, 1, 100))
+      this.health.current += 5;
+      this.health.max += 5;
+      currentEC.add(new IconBurst(tk.pairMath(buttonData.skillTree.transform(), new Pair(0, hudTileSize / -2), "add"), "gravity", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 10, 1, 100), true)
     } else {
       currentEC.add(new XPEffect(count));
     }
@@ -688,7 +690,7 @@ class Enemy {
           }
         }
       } else if(this.animation.state === "move") {
-        if(this.animation.deltaTime > 0.1) {
+        if(this.animation.deltaTime > 0.01) {
           this.animation.deltaTime = 0;
           switch(this.animation.frame) {
             case 0:
@@ -871,6 +873,25 @@ class WigglyWorm extends Enemy {
     this.health = {
       current: 10,
       max: 10
+    };
+  }
+}
+//spiderling
+class Spiderling extends Enemy {
+  constructor(transform, tile) {
+    super(transform, tile, images.enemies.spiderling);
+    this.type = "spiderling";
+    this.name = "Spiderling";
+    this.moveTime = 1;
+    this.xpValue = tk.randomNum(5, 8);
+    this.weapon = null;
+    this.melee = {
+      time: 1,
+      damage: 6,
+    };
+    this.health = {
+      current: 20,
+      max: 20
     };
   }
 }

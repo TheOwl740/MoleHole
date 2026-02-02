@@ -84,6 +84,9 @@ const images = {
   enemies: {
     wigglyWorm: {
       body: new Sprite(tk.generateImage("Assets/Enemies/WigglyWorm/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
+    },
+    spiderling: {
+      body: new Sprite(tk.generateImage("Assets/Enemies/Spiderling/body.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32)
     }
   },
   tilesets: {

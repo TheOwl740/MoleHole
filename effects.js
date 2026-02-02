@@ -110,18 +110,6 @@ class NewLevelEffect extends Effect {
     }
   }
 }
-class WaitEffect extends Effect {
-  constructor(waitAction) {
-    super(100, waitAction.actor.transform.duplicate().add(new Pair(0, tileSize / 3)), false);
-    this.actor = waitAction.actor;
-  }
-  update() {
-    this.remainingDuration--;
-    if(this.actor.tile.visible) {
-      this.renderTool.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "...", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#8500d2", this.remainingDuration / 100));
-    }
-  }
-}
 class Death extends Effect {
   constructor(entity) {
     super(20, entity.transform.duplicate(), false);
@@ -142,8 +130,8 @@ class Death extends Effect {
 }
 
 class IconBurst extends Effect {
-  constructor(transform, burstType, icon, iconCount, force, duration) {
-    super(duration, transform, true);
+  constructor(transform, burstType, icon, iconCount, force, duration, onHUD) {
+    super(duration, transform, onHUD);
     //animation type
     this.burstType = burstType;
     //force multiplier for movement
@@ -164,6 +152,9 @@ class IconBurst extends Effect {
         case "omniDirectional":
           this.icons[this.icons.length - 1].d = tk.randomNum(0, 360);
           this.icons[this.icons.length - 1].r = (tk.randomNum(0, 9) - 4.5) * this.force;
+          break;
+        case "float":
+          this.icons[this.icons.length - 1].v = new Pair((tk.randomNum(-10, 10) / 10) * this.force, (tk.randomNum(10, 20) / 10) * this.force);
           break;
       }
     }
@@ -189,6 +180,16 @@ class IconBurst extends Effect {
           icon.p.add(tk.calcRotationalTranslate(icon.d, this.force * 2));
           //update sprite and render
           icon.s.r += icon.r;
+          icon.s.alpha = this.remainingDuration / this.duration;
+          this.renderTool.renderImage(icon.p, icon.s);
+        });
+        break;
+      case "float":
+        this.icons.forEach((icon) => {
+          //update velocity and gravity
+          icon.v.x *= 0.98;
+          icon.p.add(icon.v);
+          //update sprite and render
           icon.s.alpha = this.remainingDuration / this.duration;
           this.renderTool.renderImage(icon.p, icon.s);
         });

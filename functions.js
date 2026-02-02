@@ -2,18 +2,21 @@
 
 //renders and updates button on homescreen
 function updateHomescreen() {
+  //reset cam
+  rt.camera = new Pair(0, 0);
+  rt.zoom = 1;
   //canvas clear
   cs.fillAll(new Fill("#783b0d", 1));
   //update mole animation
   let tempPlayer = new Player(new Pair(cs.w / 2, cs.h / -2));
   [tempPlayer.sprites.body.w, tempPlayer.sprites.body.h] = [tileSize * 3, tileSize * 3]; 
   //circle render
-  rt.renderCircle(new Pair(cs.w / 2, cs.h / -2), new Circle(((landscape ? cs.w : cs.h) / 2) * (((Math.sin(ec / 50) + 1) / 8) + 1)), new Fill("#301f04", (Math.sin(ec / 50) + 2) / 4), null);
-  rt.renderCircle(new Pair(cs.w / 2, cs.h / -2), new Circle(((landscape ? cs.w : cs.h) / 3) * (((Math.sin(ec / 25) + 1) / 8) + 1)), new Fill("#301f04", (Math.sin(ec / 25) + 2) / 4), null);
+  hrt.renderCircle(new Pair(cs.w / 2, cs.h / -2), new Circle(((landscape ? cs.w : cs.h) / 2) * (((Math.sin(ec / 50) + 1) / 8) + 1)), new Fill("#301f04", (Math.sin(ec / 50) + 2) / 4), null);
+  hrt.renderCircle(new Pair(cs.w / 2, cs.h / -2), new Circle(((landscape ? cs.w : cs.h) / 3) * (((Math.sin(ec / 25) + 1) / 8) + 1)), new Fill("#301f04", (Math.sin(ec / 25) + 2) / 4), null);
   //particle control
   if(menuEC) {
     if(tk.randomNum(0, 10) === 0) {
-      menuEC.add(new IconBurst(new Pair(cs.w / 2, cs.h / -2), "omniDirectional", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), tk.randomNum(1, 3), 1, 75));
+      menuEC.add(new IconBurst(new Pair(cs.w / 2, cs.h / -2), "omniDirectional", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), tk.randomNum(1, 3), 1, landscape ? 75 : 150, true));
     }
     menuEC.update(true);
   } else {
@@ -22,8 +25,8 @@ function updateHomescreen() {
   //player render
   tempPlayer.render();
   //text render
-  rt.renderText(new Pair(cs.w / 2, cs.h / -3), new TextNode("pixelFont", "MoleHole", 0, landscape ? cs.w / 30 : cs.h / 20, "center"), new Fill("#EEEEFF", 1));
-  rt.renderText(new Pair(cs.w / 2, (cs.h / -1.5) - (landscape ? cs.w / 40 : cs.h / 30)), new TextNode("pixelFont", `- ${landscape ? "click" : "tap"} anywhere to begin -`, 0, landscape ? cs.w / 50 : cs.h / 30, "center"), new Fill("#EEEEFF", 1));
+  hrt.renderText(new Pair(cs.w / 2, cs.h / -3), new TextNode("pixelFont", "MoleHole", 0, landscape ? cs.w / 30 : cs.h / 20, "center"), new Fill("#EEEEFF", 1));
+  hrt.renderText(new Pair(cs.w / 2, (cs.h / -1.5) - (landscape ? cs.w / 40 : cs.h / 30)), new TextNode("pixelFont", `- ${landscape ? "click" : "tap"} anywhere to begin -`, 0, landscape ? cs.w / 50 : cs.h / 30, "center"), new Fill("#EEEEFF", 1));
   //game start
   if(et.getClick("left") || tapData.realClick && bc.ready()) {
     loadLevel(0);
@@ -103,7 +106,7 @@ function updateHUD() {
   //add small burst if sp available
   if(player.skillPoints > 0) {
     if(tk.randomNum(0, 100 / player.skillPoints) === 0) {
-      currentEC.add(new IconBurst(new Pair(hudTileSize * 2.5, hudTileSize / -2), "omniDirectional", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 1, 0.2, 50));
+      currentEC.add(new IconBurst(new Pair(hudTileSize * 2.5, hudTileSize / -2), "omniDirectional", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 1, 0.2, 50, true));
     }
   }
   //player overlay
