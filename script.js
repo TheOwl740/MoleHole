@@ -16,7 +16,7 @@ function update() {
   //state based function timeline
   switch(gameState) {
     case "homescreen":
-      updateHomescreen()
+      updateHomescreen();
       break;
       case "inGame":
       cs.fillAll(new Fill("#000000", 1));

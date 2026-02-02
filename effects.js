@@ -50,6 +50,7 @@ class EffectController {
 class Effect {
   constructor(duration, transform, hudLayer) {
     this.hudLayer = hudLayer;
+    this.renderTool = hudLayer ? hrt : rt;
     this.duration = duration;
     this.remainingDuration = duration;
     this.transform = transform.duplicate();
@@ -64,7 +65,7 @@ class DamageNumber extends Effect {
   update() {
     this.remainingDuration--;
     if(this.sourceAttack.actor.tile.visible) {
-      rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "-" + this.sourceAttack.damage, 0, (landscape ? cs.w / 50 : cs.h / 35), "center"), new Fill(this.sourceAttack.surprise ? "#ffff00" : "#ff0202", this.remainingDuration / 60));
+      this.renderTool.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "-" + this.sourceAttack.damage, 0, (landscape ? cs.w / 50 : cs.h / 35), "center"), new Fill(this.sourceAttack.surprise ? "#ffff00" : "#ff0202", this.remainingDuration / 60));
     }
   }
 }
@@ -76,7 +77,7 @@ class XPEffect extends Effect {
   }
   update() {
     this.remainingDuration--;
-    rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "+" + this.xpCount + "xp", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#c4b921", this.remainingDuration / 60));
+    this.renderTool.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "+" + this.xpCount + "xp", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#c4b921", this.remainingDuration / 60));
   }
 }
 //skill point gain effect
@@ -87,25 +88,25 @@ class SPEffect extends Effect {
   }
   update() {
     this.remainingDuration--;
-    rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", `+${this.pointCount} Skill Point${this.pointCount > 1 ? "s" : ""}!`, 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#c4b921", this.remainingDuration / 120));
+    this.renderTool.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", `+${this.pointCount} Skill Point${this.pointCount > 1 ? "s" : ""}!`, 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#c4b921", this.remainingDuration / 120));
   }
 }
 class NewLevelEffect extends Effect {
   constructor() {
-    super(300, new Pair(cs.w / 2, cs.h / -2).add(rt.camera), false)
+    super(300, new Pair(cs.w / 2, cs.h / -2), true)
   }
   update() {
     this.remainingDuration--;
     if(this.remainingDuration > 150) {
       if(currentLevel.levelId !== 0) {
-        rt.renderText(this.transform, new TextNode("pixelFont", `-Floor ${currentLevel.levelId}-`, 0, (cs.w / 10) * (this.remainingDuration / 150), "center"), new Fill("#FFFFFF", 1));
+        this.renderTool.renderText(this.transform, new TextNode("pixelFont", `-Floor ${currentLevel.levelId}-`, 0, (cs.w / 10) * (this.remainingDuration / 150), "center"), new Fill("#FFFFFF", 1));
       }
-      rt.renderText(this.transform.duplicate().add(new Pair(0, landscape ? cs.w / 10 : cs.h / 10)), new TextNode("pixelFont", currentLevel.zone, 0, (cs.w / 15) * (this.remainingDuration / 150), "center"), new Fill("#FFFFFF", 1));
+      this.renderTool.renderText(this.transform.duplicate().add(new Pair(0, landscape ? cs.w / 10 : cs.h / 10)), new TextNode("pixelFont", currentLevel.zone, 0, (cs.w / 15) * (this.remainingDuration / 150), "center"), new Fill("#FFFFFF", 1));
     } else {
       if(currentLevel.levelId !== 0) {
-        rt.renderText(this.transform, new TextNode("pixelFont", `-Level ${currentLevel.levelId}-`, 0, cs.w / 10, "center"), new Fill("#FFFFFF", this.remainingDuration / 150));
+        this.renderTool.renderText(this.transform, new TextNode("pixelFont", `-Level ${currentLevel.levelId}-`, 0, cs.w / 10, "center"), new Fill("#FFFFFF", this.remainingDuration / 150));
       }
-      rt.renderText(this.transform.duplicate().add(new Pair(0, landscape ? cs.w / 10 : cs.h / 10)), new TextNode("pixelFont", currentLevel.zone, 0, (cs.w / 15), "center"), new Fill("#FFFFFF", this.remainingDuration / 150));
+      this.renderTool.renderText(this.transform.duplicate().add(new Pair(0, landscape ? cs.w / 10 : cs.h / 10)), new TextNode("pixelFont", currentLevel.zone, 0, (cs.w / 15), "center"), new Fill("#FFFFFF", this.remainingDuration / 150));
     }
   }
 }
@@ -117,7 +118,7 @@ class WaitEffect extends Effect {
   update() {
     this.remainingDuration--;
     if(this.actor.tile.visible) {
-      rt.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "...", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#8500d2", this.remainingDuration / 100));
+      this.renderTool.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "...", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#8500d2", this.remainingDuration / 100));
     }
   }
 }
@@ -141,10 +142,12 @@ class Death extends Effect {
 }
 
 class IconBurst extends Effect {
-  constructor(transform, burstType, icon, iconCount) {
-    super(100, transform, true);
+  constructor(transform, burstType, icon, iconCount, force, duration) {
+    super(duration, transform, true);
     //animation type
     this.burstType = burstType;
+    //force multiplier for movement
+    this.force = force;
     //icon object container
     this.icons = [];
     //create icon units
@@ -155,8 +158,12 @@ class IconBurst extends Effect {
       switch(this.burstType) {
         //gravity contains velocity and rotation subtype
         case "gravity":
-          this.icons[this.icons.length - 1].v = new Pair(tk.randomNum(-20, 20) / 10, tk.randomNum(30, 60) / 10);
+          this.icons[this.icons.length - 1].v = new Pair((tk.randomNum(-20, 20) / 10) * this.force, (tk.randomNum(30, 60) / 10) * this.force);
           this.icons[this.icons.length - 1].r = this.icons[this.icons.length - 1].v.x * tk.randomNum(1, 4);
+          break;
+        case "omniDirectional":
+          this.icons[this.icons.length - 1].d = tk.randomNum(0, 360);
+          this.icons[this.icons.length - 1].r = (tk.randomNum(0, 9) - 4.5) * this.force;
           break;
       }
     }
@@ -174,8 +181,17 @@ class IconBurst extends Effect {
           //update sprite and render
           icon.s.r += icon.r;
           icon.s.alpha = this.remainingDuration / this.duration;
-          hrt.renderImage(icon.p, icon.s);
-        })
+          this.renderTool.renderImage(icon.p, icon.s);
+        });
+        break;
+      case "omniDirectional":
+        this.icons.forEach((icon) => {
+          icon.p.add(tk.calcRotationalTranslate(icon.d, this.force * 2));
+          //update sprite and render
+          icon.s.r += icon.r;
+          icon.s.alpha = this.remainingDuration / this.duration;
+          this.renderTool.renderImage(icon.p, icon.s);
+        });
         break;
     }
   }
@@ -209,6 +225,6 @@ class Dialog {
     //render box
     this.dialogBox.render();
     //render speech bubble
-    rt.renderImage(tk.pairMath(this.entity.transform, new Pair(tileSize * 0.6, tileSize * 0.7), "add"), images.hud.speechBubble);
+    hrt.renderImage(tk.pairMath(this.entity.transform, new Pair(tileSize * 0.6, tileSize * 0.7), "add"), images.hud.speechBubble);
   }
 }

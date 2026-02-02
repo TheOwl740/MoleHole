@@ -33,8 +33,9 @@ let player = null;
 let currentTC = null;
 //pathfinding controller object
 let currentPC = null;
-//effect controller object
+//effect controller objects
 let currentEC = null;
+let menuEC = null;
 //landscape bool for multiplatform rendering
 const landscape = cs.w > cs.h;
 //tilesize for rendering tiles

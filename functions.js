@@ -7,10 +7,21 @@ function updateHomescreen() {
   //update mole animation
   let tempPlayer = new Player(new Pair(cs.w / 2, cs.h / -2));
   [tempPlayer.sprites.body.w, tempPlayer.sprites.body.h] = [tileSize * 3, tileSize * 3]; 
-  //rendering
+  //circle render
   rt.renderCircle(new Pair(cs.w / 2, cs.h / -2), new Circle(((landscape ? cs.w : cs.h) / 2) * (((Math.sin(ec / 50) + 1) / 8) + 1)), new Fill("#301f04", (Math.sin(ec / 50) + 2) / 4), null);
   rt.renderCircle(new Pair(cs.w / 2, cs.h / -2), new Circle(((landscape ? cs.w : cs.h) / 3) * (((Math.sin(ec / 25) + 1) / 8) + 1)), new Fill("#301f04", (Math.sin(ec / 25) + 2) / 4), null);
+  //particle control
+  if(menuEC) {
+    if(tk.randomNum(0, 10) === 0) {
+      menuEC.add(new IconBurst(new Pair(cs.w / 2, cs.h / -2), "omniDirectional", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), tk.randomNum(1, 3), 1, 75));
+    }
+    menuEC.update(true);
+  } else {
+    menuEC = new EffectController;
+  }
+  //player render
   tempPlayer.render();
+  //text render
   rt.renderText(new Pair(cs.w / 2, cs.h / -3), new TextNode("pixelFont", "MoleHole", 0, landscape ? cs.w / 30 : cs.h / 20, "center"), new Fill("#EEEEFF", 1));
   rt.renderText(new Pair(cs.w / 2, (cs.h / -1.5) - (landscape ? cs.w / 40 : cs.h / 30)), new TextNode("pixelFont", `- ${landscape ? "click" : "tap"} anywhere to begin -`, 0, landscape ? cs.w / 50 : cs.h / 30, "center"), new Fill("#EEEEFF", 1));
   //game start
@@ -68,7 +79,7 @@ function loadLevel(levelId) {
   //shade first area
   currentLevel.reshade();
   //add levelEffect
-  currentEC.add(new NewLevelEffect());
+  currentEC.add(new NewLevelEffect);
   //start game
   gameState = "inGame";
 }
@@ -89,6 +100,12 @@ function updateHUD() {
   let xpRect = new Rectangle(0, hudTileSize, hudTileSize * (player.xp / 20))
   hrt.renderRectangle(new Pair(hudTileSize * 2.5, (xpRect.h / 2) - hudTileSize), xpRect, new Fill("#ffee00", 1), null);
   hrt.renderText(new Pair(hudTileSize * 2.5, hudTileSize * -0.5), new TextNode("pixelFont", `${player.xp}/20`, 0, hudTileSize / 5, "center"), new Fill("#FFFFFF", 1));
+  //add small burst if sp available
+  if(player.skillPoints > 0) {
+    if(tk.randomNum(0, 100 / player.skillPoints) === 0) {
+      currentEC.add(new IconBurst(new Pair(hudTileSize * 2.5, hudTileSize / -2), "omniDirectional", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 1, 0.2, 50));
+    }
+  }
   //player overlay
   hrt.renderImage(new Pair(hudTileSize * 1.5, hudTileSize * -0.5), images.hud.player);
   let playerIcon = player.sprites.body.duplicate();
