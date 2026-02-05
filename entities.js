@@ -480,12 +480,16 @@ class Minnie extends NPC {
   }
   //custom interactions
   getInteraction() {
+    console.log(this.parentLevel.tutorialStage)
     switch(this.parentLevel.tutorialStage) {
       case 1:
         dialogController.queued.push(new Dialog(this, "Dad has asked me to wake you for an emergency family meeting.", false));
         dialogController.queued.push(new Dialog(this, "Get ready and meet us in the family mole room. QUICK!", false));
-        dialogController.queued.push(new Dialog(player, "*Click on tiles to explore. Try to find the family room!*", true));
+        dialogController.queued.push(new Dialog("Tutorial", "Click on tiles to explore. Follow Minnie to find the family room!", true));
         this.parentLevel.tutorialStage++;
+        break;
+      case 4:
+        dialogController.queued.push(new Dialog("Tutorial", "Sometimes, all you can do is wait. Press the clock icon in the top right corner to skip your turn.", true));
     }
   }
   runTurn() {
@@ -494,7 +498,7 @@ class Minnie extends NPC {
         dialogController.queued.push(new Dialog(this, "... marshall... MARSHALL!", false));
         dialogController.queued.push(new Dialog(player, "... Nnnggh... Huh?", false));
         dialogController.queued.push(new Dialog(this, "Marshall, you need to get out of bed quickly!", false));
-        dialogController.queued.push(new Dialog(player, "*Click on Minnie to go talk to her*", true));
+        dialogController.queued.push(new Dialog("Tutorial", "Click on Minnie to go talk to her.", true));
         this.parentLevel.tutorialStage++;
         return new Wait(this);
       case 2:
@@ -545,6 +549,11 @@ class Maxwell extends NPC {
       time: 1,
       damage: 1
     };
+  }
+  getInteraction() {
+    if(this.parentLevel.tutorialStage === 4) {
+      dialogController.queued.push(new Dialog("Tutorial", "Sometimes, all you can do is wait. Press the clock icon in the top right corner to skip your turn.", true));
+    }
   }
   runTurn() {
     if(this.parentLevel.tutorialStage === 4) {

@@ -280,7 +280,7 @@ class Wait extends Action {
     [this.duration, this.remainingDuration] = [1, 1];
   }
   update() {
-    currentEC.add(new IconBurst(this.actor.transform, "float", images.hud.miniIcons.duplicate().setActive(new Pair(0, 1)), 1, 0.5, 50, false));
+    currentEC.add(new IconBurst(tk.pairMath(this.actor.transform, new Pair(tileSize / 3, tileSize / 3), "add"), "float", images.hud.miniIcons.duplicate().setActive(new Pair(0, 1)), 1, 0.25, 100, false));
     this.actor.animation.state = "idle";
   }
 }

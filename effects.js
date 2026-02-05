@@ -206,26 +206,32 @@ class Dialog {
     this.text = text;
     this.isThought = isThought
     //assign tilescheme
-    switch(entity.eType) {
-      case "player":
-        this.tileScheme = entityTS.player;
-        break;
-      case "enemy":
-        this.tileScheme = entityTS.enemy;
-        break;
-      case "npc":
-        this.tileScheme = entityTS.npc;
-        break;
-      default:
-        this.tileScheme = entityTS.nme;
-        break;
+    if(entity === "Tutorial") {
+      this.tileScheme = entityTS.nme;
+    } else {
+      switch(entity.eType) {
+        case "player":
+          this.tileScheme = entityTS.player;
+          break;
+        case "enemy":
+          this.tileScheme = entityTS.enemy;
+          break;
+        case "npc":
+          this.tileScheme = entityTS.npc;
+          break;
+        default:
+          this.tileScheme = entityTS.nme;
+          break;
+      }
     }
-    this.dialogBox = new Textbox(this.tileScheme, new Pair(cs.w / 2, cs.h * -0.85), new Pair(cs.w - tileSize, cs.h * 0.2), new TextNode("pixelFont", this.entity.name + ": " + this.text, 0, landscape ? cs.w / 50 : cs.h / 30, "left"));
+    this.dialogBox = new Textbox(this.tileScheme, new Pair(cs.w / 2, cs.h * -0.85), new Pair(cs.w - tileSize, cs.h * 0.2), new TextNode("pixelFont", (this.entity === "Tutorial" ? "Tutorial" : this.entity.name) + ": " + this.text, 0, landscape ? cs.w / 50 : cs.h / 30, "left"));
   }
   render() {
     //render box
     this.dialogBox.render();
     //render speech bubble
-    hrt.renderImage(tk.pairMath(this.entity.transform, new Pair(tileSize * 0.6, tileSize * 0.7), "add"), images.hud.speechBubble);
+    if(this.entity !== "Tutorial") {
+      rt.renderImage(tk.pairMath(this.entity.transform, new Pair(tileSize * 0.6, tileSize * 0.7), "add"), images.hud.speechBubble);
+    }
   }
 }
