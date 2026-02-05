@@ -21,6 +21,8 @@ class Tile {
     this.type;
     //boolean is walkable
     this.walkable;
+    //countdown until a new enemy spawns
+    this.enemySpawnCountdown = 75;
   }
   //returns this tile's collider
   collider() {
@@ -256,7 +258,6 @@ class Level {
     if(this.levelId === 0) {
       this.zone = "The Mole Hill";
       this.tileset = images.tilesets.dirt;
-      this.tutorialStage = 0;
     } else if(this.levelId >= 1) {
       this.zone = "Buggy Burrows";
       this.tileset = images.tilesets.dirt;
@@ -471,23 +472,54 @@ class Level {
       this.items[i].render();
     }
   }
+  //pinged by turn controller each turn
+  turnPing() {
+    if(this.enemySpawnCountdown > 0) {
+      this.enemySpawnCountdown--;
+    } else {
+      this.enemySpawnCountdown = 50 - this.levelId;
+      this.spawnEnemy(false);
+    }
+  }
   update() {
+    //remove dead enemies
     for(let i = 0; i < this.enemies.length; i++) {
       if(this.enemies[i].health.current < 1) {
         currentTC.remove(this.enemies[i]);
         currentEC.add(new Death(this.enemies[i]));
         player.addXP(this.enemies[i].xpValue);
+        this.enemySpawnCountdown -= 5;
         this.enemies[i].tile.entity = null;
         this.enemies.splice(i, 1);
         i--;
       }
     }
+    //remove dead npcs
     for(let i = 0; i < this.npcs.length; i++) {
       if(this.npcs[i].health.current < 1) {
         currentTC.remove(this.npcs[i]);
         currentEC.add(new Death(this.npcs[i]));
         this.enemies[i].tile.entity = null;
         this.enemies.splice(i, 1);
+        i--;
+      }
+    }
+    //remove deleted nmes
+    for(let i = 0; i < this.nmes.length; i++) {
+      if(this.nmes[i].deleteNow) {
+        currentTC.remove(this.nmes[i]);
+        currentEC.add(new Death(this.nmes[i]));
+        this.nmes[i].tile.entity = null;
+        this.nmes.splice(i, 1);
+        i--;
+      }
+    }
+    //remove deleted items
+    for(let i = 0; i < this.items.length; i++) {
+      if(this.items[i].deleteNow) {
+        currentTC.remove(this.items[i]);
+        this.items[i].tile.entity = null;
+        this.items.splice(i, 1);
         i--;
       }
     }
@@ -511,16 +543,25 @@ class Level {
     const retList = [];
     //get entities that can't be walked on
     if(client.type !== "level") {
+      //block targeting enemies unless they are target index (for hit)
       this.enemies.forEach((enemy) => {
         if(!(enemy.tile.index.isEqualTo(client.tile.index) || enemy.tile.index.isEqualTo(client.targetIndex))) {
           retList.push(enemy.tile.index.duplicate());
         }
       });
+      //block targeting npcs unless they are target index (for interaction)
       this.npcs.forEach((npc) => {
         if(!(npc.tile.index.isEqualTo(client.tile.index) || npc.tile.index.isEqualTo(client.targetIndex))) {
           retList.push(npc.tile.index.duplicate());
         }
       });
+      //block targeting nmes unless they are target index (for interaction)
+      this.nmes.forEach((nme) => {
+        if(!(nme.tile.index.isEqualTo(client.tile.index) || nme.tile.index.isEqualTo(client.targetIndex))) {
+          retList.push(nme.tile.index.duplicate());
+        }
+      });
+      //block targeting player unless he is target index
       if(!(client.type === "player" || player.tile.index.isEqualTo(client.targetIndex))) {
         retList.push(player.tile.index.duplicate());
       }
@@ -610,12 +651,13 @@ class Level {
 
 //room class for level stamping
 class Room {
-  constructor(w, h, id, entranceCount, blockedFloors, tileOverlays, tileMap) {
+  constructor(w, h, id, entranceCount, blockedFloors, tileOverlays, entities, tileMap) {
     [this.w, this.h] = [w, h];
     this.id = id;
     this.entranceCount = entranceCount;
     this.blockedFloors = blockedFloors;
     this.tileOverlays = tileOverlays;
+    this.entities = entities;
     this.tileMap = tileMap;
   }
   stamp(level, tlIndex) {
@@ -656,6 +698,18 @@ class Room {
         targetTile.overlay = overlayModule.overlay;
       });
     }
+    //add entities
+    this.entities.forEach((entityModule) => {
+      let targetTile = level.map[tlIndex.y + entityModule.index.x][tlIndex.x - entityModule.index.y];
+      switch(entityModule.entity) {
+        case "silverChest":
+          level.nmes.push(new Chest(targetTile.transform.duplicate(), targetTile, 0));
+          break;
+        case "goldChest":
+          level.nmes.push(new Chest(targetTile.transform.duplicate(), targetTile, 0))
+          break;
+      }
+    });
     //trim entrances
     while(retObj.entranceIndices.length > this.entranceCount) {
       let farthestDist = false;
@@ -691,7 +745,9 @@ const tileMaps = [
       overlay: new TileOverlay("painting"),
       index: new Pair(3, 0)
     }
-  ], [
+  ],
+  [],
+  [
     ['w','w','w','w','w','w','w','w'],
     ['w','f','f','f','f','f','f','w'],
     ['w','f','f','f','f','p','p','w'],
@@ -712,7 +768,9 @@ const tileMaps = [
       overlay: new TileOverlay("ballDresser"),
       index: new Pair(1, 1)
     }
-  ], [
+  ],
+  [],
+  [
     ['w','w','e','w','w','w','w'],
     ['w','f','f','f','f','f','w'],
     ['w','f','f','f','f','f','w'],
@@ -732,7 +790,9 @@ const tileMaps = [
       overlay: new TileOverlay("teddy"),
       index: new Pair(5, 2)
     }
-  ], [
+  ],
+  [],
+  [
     ['w','w','e','w','w','w','w'],
     ['w','f','f','f','f','f','w'],
     ['w','f','f','f','f','f','w'],
@@ -752,7 +812,9 @@ const tileMaps = [
       overlay: new TileOverlay("monitor"),
       index: new Pair(1, 1)
     }
-  ], [
+  ],
+  [],
+  [
     ['w','w','w','e','w','w','w'],
     ['w','f','f','f','f','f','w'],
     ['w','f','f','f','f','f','w'],
@@ -772,7 +834,9 @@ const tileMaps = [
       overlay: new TileOverlay("dresser"),
       index: new Pair(1, 1)
     }
-  ], [
+  ],
+  [],
+  [
     ['w','w','w','e','w','w','w'],
     ['w','f','f','f','f','f','w'],
     ['w','f','f','f','f','f','w'],
@@ -784,7 +848,9 @@ const tileMaps = [
       overlay: new TileOverlay("entrance"),
       index: new Pair(2, 2)
     }
-  ], [
+  ],
+  [],
+  [
     ['w','w','e','w','w'],
     ['w','f','f','f','w'],
     ['e','f','f','f','e'],
@@ -796,7 +862,9 @@ const tileMaps = [
       overlay: new TileOverlay("web1"),
       index: new Pair(2, 2)
     }
-  ], [
+  ],
+  [],
+  [
     ['w','w','e','w','w'],
     ['w','f','f','f','w'],
     ['e','f','f','f','e'],
@@ -808,7 +876,9 @@ const tileMaps = [
       overlay: new TileOverlay("exit"),
       index: new Pair(2, 2)
     }
-  ], [
+  ],
+  [],
+  [
     ['w','w','e','w','w'],
     ['w','f','f','f','w'],
     ['e','f','f','f','e'],
@@ -825,6 +895,7 @@ const tileMaps = [
       index: new Pair(2, 3)
     },
   ],
+  [],
   [
     ['w','w','e','w','w'],
     ['w','f','f','f','w'],
@@ -850,6 +921,7 @@ const tileMaps = [
       index: new Pair(3, 2)
     }
   ],
+  [],
   [
     ['w','w','w','e','w','w','w'],
     ['w','f','f','f','f','f','w'],
@@ -881,6 +953,7 @@ const tileMaps = [
       index: new Pair(7, 1)
     }
   ],
+  [],
   [
     ['w','w','e','w','e','w','e','w','w'],
     ['w','f','f','f','f','f','f','f','w'],
@@ -898,6 +971,7 @@ const tileMaps = [
       index: new Pair(3, 3)
     }
   ],
+  [],
   [
     ['w','w','w','e','w','w','w'],
     ['w','w','f','f','f','w','w'],
@@ -913,6 +987,7 @@ const tileMaps = [
       index: new Pair(3, 3)
     }
   ],
+  [],
   [
     ['w','w','w','w','w','w','w'],
     ['w','w','f','w','f','w','w'],
@@ -960,10 +1035,34 @@ const tileMaps = [
       index: new Pair(3, 3)
     }
   ],
+  [],
   [
     ['w','w','e','w','w'],
     ['w','f','f','f','w'],
     ['e','f','f','f','e'],
+    ['w','f','f','f','w'],
+    ['w','w','e','w','w']
+  ]),
+  new Room(5, 5, "smallTreasure", 1, [0], [
+    {
+      overlay: new TileOverlay("web4"),
+      index: new Pair(3, 1)
+    },
+    {
+      overlay: new TileOverlay("web2"),
+      index: new Pair(1, 3)
+    },
+  ],
+  [
+    {
+      entity: "silverChest",
+      index: new Pair(2, 1)
+    }
+  ],
+  [
+    ['w','w','w','w','w'],
+    ['w','f','f','f','w'],
+    ['w','f','f','f','w'],
     ['w','f','f','f','w'],
     ['w','w','e','w','w']
   ]),

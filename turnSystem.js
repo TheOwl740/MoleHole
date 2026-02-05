@@ -64,6 +64,10 @@ class TurnController {
                 turnEnt.turnPing();
               }
             });
+            //ping the level
+            for(let ping = 0; ping < absoluteIncrease; ping++) {
+              currentLevel.turnPing();
+            }
             //set highest to new highest
             this.highestTurn = this.turn;
           }
@@ -280,7 +284,7 @@ class Wait extends Action {
     [this.duration, this.remainingDuration] = [1, 1];
   }
   update() {
-    currentEC.add(new IconBurst(tk.pairMath(this.actor.transform, new Pair(tileSize / 3, tileSize / 3), "add"), "float", images.hud.miniIcons.duplicate().setActive(new Pair(0, 1)), 1, 0.25, 100, false));
+    currentEC.add(new ParticleEffect(tk.pairMath(this.actor.transform, new Pair(tileSize / 3, tileSize / 3), "add"), "float", images.hud.miniIcons.duplicate().setActive(new Pair(0, 1)), 1, 0.25, 100, false));
     this.actor.animation.state = "idle";
   }
 }

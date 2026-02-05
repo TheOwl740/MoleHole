@@ -16,7 +16,7 @@ function updateHomescreen() {
   //particle control
   if(menuEC) {
     if(tk.randomNum(0, 10) === 0) {
-      menuEC.add(new IconBurst(new Pair(cs.w / 2, cs.h / -2), "omniDirectional", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), tk.randomNum(1, 3), 1, landscape ? 75 : 150, true));
+      menuEC.add(new ParticleEffect(new Pair(cs.w / 2, cs.h / -2), "omniDirectional", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), tk.randomNum(1, 3), 1, landscape ? 75 : 150, true));
     }
     menuEC.update(true);
   } else {
@@ -106,7 +106,7 @@ function updateHUD() {
   //add small burst if sp available
   if(player.skillPoints > 0) {
     if(tk.randomNum(0, 100 / player.skillPoints) === 0) {
-      currentEC.add(new IconBurst(new Pair(hudTileSize * 2.5, hudTileSize / -2), "omniDirectional", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 1, 0.2, 50, true));
+      currentEC.add(new ParticleEffect(new Pair(hudTileSize * 2.5, hudTileSize / -2), "omniDirectional", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 1, 0.2, 50, true));
     }
   }
   //player overlay
@@ -169,7 +169,9 @@ function updateTERelationship(oldTile, entity, newTile) {
     oldTile.entity = null;
   }
   entity.tile = newTile;
-  newTile.entity = entity;
+  if(newTile) {
+    newTile.entity = entity;
+  }
 }
 //rotational translate for whole indices
 function rotationalTile(index, angle, magnitude) {

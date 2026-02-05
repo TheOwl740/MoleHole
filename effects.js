@@ -129,32 +129,36 @@ class Death extends Effect {
   }
 }
 
-class IconBurst extends Effect {
-  constructor(transform, burstType, icon, iconCount, force, duration, onHUD) {
+class ParticleEffect extends Effect {
+  constructor(transform, effectType, particle, particleCount, force, duration, onHUD) {
     super(duration, transform, onHUD);
     //animation type
-    this.burstType = burstType;
+    this.effectType = effectType;
     //force multiplier for movement
     this.force = force;
-    //icon object container
-    this.icons = [];
-    //create icon units
-    for(let ci = 0; ci < iconCount; ci++) {
-      //all icons have a position and sprite
-      this.icons.push({p: transform.duplicate(), s: icon.duplicate()});
+    //particle object container
+    this.particles = [];
+    //create particle units
+    for(let ci = 0; ci < particleCount; ci++) {
+      //all particles have a position and sprite
+      this.particles.push({p: transform.duplicate(), s: particle.duplicate()});
       //different types have different submodules
-      switch(this.burstType) {
+      switch(this.effectType) {
         //gravity contains velocity and rotation subtype
-        case "gravity":
-          this.icons[this.icons.length - 1].v = new Pair((tk.randomNum(-20, 20) / 10) * this.force, (tk.randomNum(30, 60) / 10) * this.force);
-          this.icons[this.icons.length - 1].r = this.icons[this.icons.length - 1].v.x * tk.randomNum(1, 4);
+        case "gravityBurst":
+          this.particles[this.particles.length - 1].v = new Pair((tk.randomNum(-20, 20) / 10) * this.force, (tk.randomNum(30, 60) / 10) * this.force);
+          this.particles[this.particles.length - 1].r = this.particles[this.particles.length - 1].v.x * tk.randomNum(1, 4);
           break;
         case "omniDirectional":
-          this.icons[this.icons.length - 1].d = tk.randomNum(0, 360);
-          this.icons[this.icons.length - 1].r = (tk.randomNum(0, 9) - 4.5) * this.force;
+          this.particles[this.particles.length - 1].d = tk.randomNum(0, 360);
+          this.particles[this.particles.length - 1].r = (tk.randomNum(0, 9) - 4.5) * this.force;
           break;
         case "float":
-          this.icons[this.icons.length - 1].v = new Pair((tk.randomNum(-10, 10) / 10) * this.force, (tk.randomNum(10, 20) / 10) * this.force);
+          this.particles[this.particles.length - 1].v = new Pair((tk.randomNum(-10, 10) / 10) * this.force, (tk.randomNum(10, 20) / 10) * this.force);
+          break;
+        case "glitter":
+          this.particles[this.particles.length - 1].r = this.force * -1;
+          this.particles[this.particles.length - 1].p.add(new Pair(tk.randomNum(-5, 5), tk.randomNum(-5, 5)).multiply(this.force));
           break;
       }
     }
@@ -162,36 +166,44 @@ class IconBurst extends Effect {
   update() {
     this.remainingDuration--;
     //animation control
-    switch(this.burstType) {
-      case "gravity":
-        this.icons.forEach((icon) => {
+    switch(this.effectType) {
+      case "gravityBurst":
+        this.particles.forEach((particle) => {
           //update velocity and gravity
-          icon.v.y -= 0.3;
-          icon.v.x *= 0.98;
-          icon.p.add(icon.v);
+          particle.v.y -= 0.3;
+          particle.v.x *= 0.98;
+          particle.p.add(particle.v);
           //update sprite and render
-          icon.s.r += icon.r;
-          icon.s.alpha = this.remainingDuration / this.duration;
-          this.renderTool.renderImage(icon.p, icon.s);
+          particle.s.r += particle.r;
+          particle.s.alpha = this.remainingDuration / this.duration;
+          this.renderTool.renderImage(particle.p, particle.s);
         });
         break;
       case "omniDirectional":
-        this.icons.forEach((icon) => {
-          icon.p.add(tk.calcRotationalTranslate(icon.d, this.force * 2));
+        this.particles.forEach((particle) => {
+          particle.p.add(tk.calcRotationalTranslate(particle.d, this.force * 2));
           //update sprite and render
-          icon.s.r += icon.r;
-          icon.s.alpha = this.remainingDuration / this.duration;
-          this.renderTool.renderImage(icon.p, icon.s);
+          particle.s.r += particle.r;
+          particle.s.alpha = this.remainingDuration / this.duration;
+          this.renderTool.renderImage(particle.p, particle.s);
         });
         break;
       case "float":
-        this.icons.forEach((icon) => {
+        this.particles.forEach((particle) => {
           //update velocity and gravity
-          icon.v.x *= 0.98;
-          icon.p.add(icon.v);
+          particle.v.x *= 0.98;
+          particle.p.add(particle.v);
           //update sprite and render
-          icon.s.alpha = this.remainingDuration / this.duration;
-          this.renderTool.renderImage(icon.p, icon.s);
+          particle.s.alpha = this.remainingDuration / this.duration;
+          this.renderTool.renderImage(particle.p, particle.s);
+        });
+        break;
+      case "glitter":
+        this.particles.forEach((particle) => {
+          //update sprite and render
+          particle.s.alpha = this.remainingDuration / this.duration;
+          particle.s.r += particle.r;
+          this.renderTool.renderImage(particle.p, particle.s);
         });
         break;
     }

@@ -224,7 +224,10 @@ class Player {
       this.xp -= points * 20;
       this.health.current += 5;
       this.health.max += 5;
-      currentEC.add(new IconBurst(tk.pairMath(buttonData.skillTree.transform(), new Pair(0, hudTileSize / -2), "add"), "gravity", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 10, 1, 100), true)
+      currentEC.add(new ParticleEffect(tk.pairMath(buttonData.skillTree.transform(), new Pair(0, hudTileSize / -2), "add"), "gravityBurst", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 10, 1, 100), true)
+      if(!tutorial.hasFirstSP) {
+        dialogController.queued.push(new Dialog("Tutorial", "You got your first upgrade point! Click the star in the top left menu to choose an upgrade."))
+      }
     } else {
       currentEC.add(new XPEffect(count));
     }
@@ -423,7 +426,7 @@ class Michael extends NPC {
     
   }
   runTurn() {
-    switch(this.parentLevel.tutorialStage) {
+    switch(tutorial.stage) {
       case 3:
         if(this.tile.index.isEqualTo(tk.pairMath(player.tile.index, new Pair(0, 1), "add"))) {
           dialogController.queued.push(new Dialog(this, "Hello Marshall! I'm happy to see that you are finally up.", false));
@@ -437,7 +440,7 @@ class Michael extends NPC {
           dialogController.queued.push(new Dialog(this, "Are you sure you weren't a little hungry after dinner and decided to take a little more?", false));
           dialogController.queued.push(new Dialog(player, "Of course not, I would never.", false));
           dialogController.queued.push(new Dialog(this, "I certainly hope not. You know what happens to those who steal rations...", false));
-          this.parentLevel.tutorialStage++;
+          tutorial.stage++;
         }
         return new Wait(this);
       default:
@@ -480,32 +483,32 @@ class Minnie extends NPC {
   }
   //custom interactions
   getInteraction() {
-    console.log(this.parentLevel.tutorialStage)
-    switch(this.parentLevel.tutorialStage) {
+    console.log(tutorial.stage)
+    switch(tutorial.stage) {
       case 1:
         dialogController.queued.push(new Dialog(this, "Dad has asked me to wake you for an emergency family meeting.", false));
         dialogController.queued.push(new Dialog(this, "Get ready and meet us in the family mole room. QUICK!", false));
         dialogController.queued.push(new Dialog("Tutorial", "Click on tiles to explore. Follow Minnie to find the family room!", true));
-        this.parentLevel.tutorialStage++;
+        tutorial.stage++;
         break;
       case 4:
         dialogController.queued.push(new Dialog("Tutorial", "Sometimes, all you can do is wait. Press the clock icon in the top right corner to skip your turn.", true));
     }
   }
   runTurn() {
-    switch(this.parentLevel.tutorialStage) {
+    switch(tutorial.stage) {
       case 0:
         dialogController.queued.push(new Dialog(this, "... marshall... MARSHALL!", false));
         dialogController.queued.push(new Dialog(player, "... Nnnggh... Huh?", false));
         dialogController.queued.push(new Dialog(this, "Marshall, you need to get out of bed quickly!", false));
         dialogController.queued.push(new Dialog("Tutorial", "Click on Minnie to go talk to her.", true));
-        this.parentLevel.tutorialStage++;
+        tutorial.stage++;
         return new Wait(this);
       case 2:
         this.targetIndex = this.pitRoomIndex;
         this.updatePath();
         if(this.tile.index.isEqualTo(this.pitRoomIndex)) {
-          this.parentLevel.tutorialStage++;
+          tutorial.stage++;
           this.path = null;
           this.targetIndex = null;
           return new Wait(this);
@@ -551,12 +554,12 @@ class Maxwell extends NPC {
     };
   }
   getInteraction() {
-    if(this.parentLevel.tutorialStage === 4) {
+    if(tutorial.stage === 4) {
       dialogController.queued.push(new Dialog("Tutorial", "Sometimes, all you can do is wait. Press the clock icon in the top right corner to skip your turn.", true));
     }
   }
   runTurn() {
-    if(this.parentLevel.tutorialStage === 4) {
+    if(tutorial.stage === 4) {
       this.targetIndex = player.tile.index;
       this.updatePath();
       if(this.path[0].isEqualTo(this.targetIndex)) {
@@ -639,6 +642,7 @@ class Enemy {
     this.chaseTime = 0;
     //subclass specific
     this.type;
+    this.name;
     //time elapsed by one tile movement
     this.moveTime;
     //kill value
@@ -902,5 +906,90 @@ class Spiderling extends Enemy {
       current: 20,
       max: 20
     };
+  }
+}
+//non moving entity class
+class NME {
+  constructor(transform, tile, spriteLocation) {
+    //entity type
+    this.eType = "nme"
+    //location data
+    this.transform = transform;
+    this.tile = tile;
+    this.parentLevel = tile.parentLevel;
+    //assign tile
+    updateTERelationship(null, this, this.tile);
+    //sprite data
+    this.sprite = spriteLocation.duplicate();
+    //removal boolean for the level
+    this.deleteNow = false;
+    //subclass specific
+    this.type;
+    this.name;
+  }
+  render() {
+    rt.renderImage(this.transform, this.sprite);
+  }
+  //interaction method placeholder
+  interact() {
+  }
+}
+//loot chest subclass
+class Chest extends NME {
+  constructor(transform, tile, tier) {
+    super(transform, tile, images.nmes.chests.setActive(new Pair(0, tier)));
+    this.type = "chest";
+    this.name = "Chest";
+    this.tier = tier;
+  }
+  render() {
+    //render object
+    rt.renderImage(this.transform, this.sprite);
+    //add gleam particle effect
+    if(tk.randomNum(0, 500) === 0) {
+      currentEC.add(new ParticleEffect(tk.pairMath(this.transform, new Pair(tileSize / 2.2, tileSize / 3.3), "add"), "glitter", images.hud.miniIcons.duplicate().setActive(new Pair(this.tier === 0 ? 1 : 0, 3)), 1, 1, 50, false))
+    }
+  }
+  interact() {
+    this.deleteNow = true;
+  }
+}
+//item class
+class Item {
+  constructor(transform, tile, spriteLocation) {
+    //entity type
+    this.eType = "item"
+    //location data as entity
+    this.transform = transform;
+    this.tile = tile;
+    this.parentLevel = tile.parentLevel;
+    //assign tile
+    updateTERelationship(null, this, this.tile);
+    //owner data as item
+    this.owner = null;
+    //sprite data
+    this.sprite = spriteLocation.duplicate();
+    //removal boolean for the level
+    this.deleteNow = false;
+    //subclass specific
+    this.type;
+    this.name;
+  }
+  render() {
+    rt.renderImage(this.transform, this.sprite);
+  }
+  //when an entity picks up or drops the item
+  convert(newOwner) {
+    if(this.owner === null) {
+      this.deleteNow = true;
+      this.owner = newOwner;
+      newOwner.inventory.push(this);
+    } else {
+      this.deleteNow = false;
+      this.owner = null;
+      this.tile = newOwner;
+      this.transform = newOwner.transform.duplicate();
+      updateTERelationship(null, this, this.tile);
+    }
   }
 }
