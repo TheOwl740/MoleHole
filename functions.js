@@ -139,6 +139,7 @@ function updateFailscreen() {
   currentTC = null;
   currentPC = null;
   rt.camera = new Pair(0, 0);
+  rt.zoom = 1;
   //canvas clear
   cs.fillAll(new Fill("#000000", 1));
   //rendering

@@ -92,6 +92,9 @@ const images = {
   nmes: {
     chests: new Sprite(tk.generateImage("Assets/NMEs/chests.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32)
   },
+  items: {
+    potions: new Sprite(tk.generateImage("Assets/Items/potions.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32)
+  },
   tilesets: {
     dirt: new Sprite(tk.generateImage("Assets/Tilesets/dirt.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32)
   },

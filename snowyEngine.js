@@ -500,7 +500,7 @@ class RenderTool {
     if(img.type === "img") {
       this.canvas.cx.drawImage(img.img, ((img.x / this.zoom) * fc.x) - ((img.w / this.zoom) / 2), ((img.y / this.zoom) * fc.y) - ((img.h / this.zoom) / 2), img.w / this.zoom, img.h / this.zoom);
     } else {
-      this.canvas.cx.drawImage(img.img, (img.activeTile.x * img.tw) + 0.1, (img.activeTile.y * img.th) + 0.1, img.tw - 0.2, img.th - 0.2, ((img.x / this.zoom) * fc.x) - ((img.w / this.zoom) / 2), ((img.y / this.zoom) * fc.y) - ((img.h / this.zoom) / 2), img.w / this.zoom, img.h / this.zoom);
+      this.canvas.cx.drawImage(img.img, (img.activeTile.x * img.tw) + 0.01, (img.activeTile.y * img.th) + 0.01, img.tw - 0.02, img.th - 0.02, ((img.x / this.zoom) * fc.x) - ((img.w / this.zoom) / 2), ((img.y / this.zoom) * fc.y) - ((img.h / this.zoom) / 2), img.w / this.zoom, img.h / this.zoom);
     }
     //restore canvas
     this.canvas.cx.restore();

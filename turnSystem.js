@@ -301,6 +301,72 @@ class Interaction extends Action {
     this.actor.animation.state = "idle";
   }
 }
+class ChestOpen extends Action {
+  constructor(actor, chest) {
+    super(actor, 1);
+    this.type = "chestOpen";
+    [this.duration, this.remainingDuration] = [1, 1];
+    //npc being interacted with
+    this.chest = chest;
+  }
+  update() {
+    this.chest.open();
+    this.actor.animation.state = "idle";
+  }
+  complete() {
+    this.chest.open();
+  }
+}
+class ItemCollect extends Action {
+  constructor(actor, item) {
+    super(actor, actor.moveTime + 0.5);
+    this.type = "itemCollect";
+    [this.duration, this.remainingDuration] = [10, 10];
+    //tile being moved to
+    this.targetTile = item.tile;
+    //item being collected
+    this.item = item;
+    //distance to move each frame
+    this.stepLength = tk.pairMath(this.actor.transform, this.targetTile.transform, "distance") / this.duration;
+    //direction to move
+    this.moveDirection = tk.pairMath(this.actor.transform, this.targetTile.transform, "angle");
+  }
+  update() {
+    //on start
+    if(this.remainingDuration === this.duration) {
+      //update tile relationship
+      updateTERelationship(this.actor.tile, this.actor, this.targetTile);
+      //face right direction
+      if(this.actor.transform.x !== this.targetTile.transform.x) {
+        this.actor.leftFacing = this.actor.transform.x > this.targetTile.transform.x;
+      }
+      //start move animation
+      this.actor.animation.state = "move";
+    }
+    //while running
+    if(this.remainingDuration > 1) {
+      this.actor.transform.rotationalIncrease(this.moveDirection, this.stepLength);
+    //last frame
+    } else {
+      if(this.actor.type === "player") {
+        currentLevel.reshade();
+      }
+      this.actor.transform = this.targetTile.transform.duplicate();
+      //set back to idle
+      this.actor.animation.state = "idle";
+      //update item relationship
+      this.item.convert(this.actor);
+    }
+  }
+  complete() {
+    //update item relationship
+    this.item.convert(this.actor);
+    //update tile relationship
+    updateTERelationship(this.actor.tile, this.actor, this.targetTile);
+    //physically move
+    this.actor.transform = this.targetTile.transform.duplicate();
+  }
+}
 class Fall extends Action {
   constructor(actor) {
     super(actor, 0);

@@ -53,6 +53,8 @@ class Player {
       regenMax: 10,
       regenPoints: 0
     }
+    //array containing all inventory items
+    this.inventory = [];
     //creates a tile entity relationship if placed in the context of a level
     if(currentLevel !== null) {
       updateTERelationship(null, this, currentLevel.getTile(transform));
@@ -184,7 +186,21 @@ class Player {
           return new Interaction(this, currentLevel.npcs[i])
         }
       }
-      //move if no attacks
+      //check against chests
+      for(let i = 0; i < currentLevel.nmes.length; i++) {
+        if(currentLevel.nmes[i].type === "chest" && currentLevel.nmes[i].tile.index.isEqualTo(this.movePath[0])) {
+          this.targetIndex = null;
+          return new ChestOpen(this, currentLevel.nmes[i]);
+        }
+      }
+      //check against items
+      for(let i = 0; i < currentLevel.items.length; i++) {
+        if(currentLevel.items[i].tile.index.isEqualTo(this.movePath[0])) {
+          this.targetIndex = null;
+          return new ItemCollect(this, currentLevel.items[i]);
+        }
+      }
+      //move if no interactions
       return new Movement(this, currentLevel.getIndex(this.movePath[0]));
     }
     return null;
@@ -928,7 +944,9 @@ class NME {
     this.name;
   }
   render() {
-    rt.renderImage(this.transform, this.sprite);
+    if(this.tile.visible) {
+      rt.renderImage(this.transform, this.sprite);
+    }
   }
   //interaction method placeholder
   interact() {
@@ -941,17 +959,34 @@ class Chest extends NME {
     this.type = "chest";
     this.name = "Chest";
     this.tier = tier;
+    this.loot = null;
   }
   render() {
-    //render object
-    rt.renderImage(this.transform, this.sprite);
-    //add gleam particle effect
-    if(tk.randomNum(0, 500) === 0) {
-      currentEC.add(new ParticleEffect(tk.pairMath(this.transform, new Pair(tileSize / 2.2, tileSize / 3.3), "add"), "glitter", images.hud.miniIcons.duplicate().setActive(new Pair(this.tier === 0 ? 1 : 0, 3)), 1, 1, 50, false))
+    if(this.tile.visible) {
+      //render object
+      rt.renderImage(this.transform, this.sprite);
+      //add gleam particle effect
+      if(tk.randomNum(0, 500) === 0) {
+        currentEC.add(new ParticleEffect(tk.pairMath(this.transform, new Pair(tileSize / 2.2, tileSize / 3.3), "add"), "glitter", images.hud.miniIcons.duplicate().setActive(new Pair(this.tier === 0 ? 1 : 0, 3)), 1, 1, 50, false))
+      }
     }
   }
-  interact() {
+  open() {
     this.deleteNow = true;
+    let lootSeed = tk.randomNum(0, 100 + (this.tier * 25))
+    if(lootSeed < 10) {
+      this.loot = new Potion(this.transform, this.tile, "haste");
+    } else if(lootSeed < 20) {
+      this.loot = new Potion(this.transform, this.tile, "poison");
+    } else if(lootSeed < 30) {
+      this.loot = new Potion(this.transform, this.tile, "levitation");
+    } else if(lootSeed < 40) {
+      this.loot = new Potion(this.transform, this.tile, "shield");
+    } else if(lootSeed < 50) {
+      this.loot = new Potion(this.transform, this.tile, "damage");
+    } else {
+      this.loot = new Potion(this.transform, this.tile, "health");
+    }
   }
 }
 //item class
@@ -976,20 +1011,53 @@ class Item {
     this.name;
   }
   render() {
-    rt.renderImage(this.transform, this.sprite);
+    if(this.tile.visible) {
+      rt.renderImage(this.transform, this.sprite);
+    }
   }
   //when an entity picks up or drops the item
   convert(newOwner) {
     if(this.owner === null) {
       this.deleteNow = true;
+      this.parentLevel = null;
       this.owner = newOwner;
       newOwner.inventory.push(this);
     } else {
       this.deleteNow = false;
       this.owner = null;
+      this.parentLevel = currentLevel
       this.tile = newOwner;
       this.transform = newOwner.transform.duplicate();
       updateTERelationship(null, this, this.tile);
+    }
+  }
+}
+//potion item subclass
+class Potion extends Item {
+  constructor(transform, tile, potionType) {
+    super(transform, tile, images.items.potions);
+    this.type = "potion";
+    this.name = "Potion";
+    this.potionType = potionType;
+    switch(potionType) {
+      case "health":
+        this.sprite.setActive(new Pair(0, 0));
+        break;
+      case "haste":
+        this.sprite.setActive(new Pair(1, 0));
+        break;
+      case "poison":
+        this.sprite.setActive(new Pair(0, 1));
+        break;
+      case "levitation":
+        this.sprite.setActive(new Pair(1, 1));
+        break;
+      case "shield":
+        this.sprite.setActive(new Pair(0, 2));
+        break;
+      case "damage":
+        this.sprite.setActive(new Pair(1, 2));
+        break;
     }
   }
 }

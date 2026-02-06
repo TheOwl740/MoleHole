@@ -128,7 +128,6 @@ class Death extends Effect {
     }
   }
 }
-
 class ParticleEffect extends Effect {
   constructor(transform, effectType, particle, particleCount, force, duration, onHUD) {
     super(duration, transform, onHUD);

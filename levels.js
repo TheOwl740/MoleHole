@@ -507,9 +507,12 @@ class Level {
     //remove deleted nmes
     for(let i = 0; i < this.nmes.length; i++) {
       if(this.nmes[i].deleteNow) {
-        currentTC.remove(this.nmes[i]);
-        currentEC.add(new Death(this.nmes[i]));
-        this.nmes[i].tile.entity = null;
+        if(this.nmes[i].type === "chest") {
+          this.items.push(this.nmes[i].loot);
+          this.nmes[i].tile.entity = this.nmes[i].loot;
+        } else {
+          this.nmes[i].tile.entity = null;
+        }
         this.nmes.splice(i, 1);
         i--;
       }
@@ -517,7 +520,6 @@ class Level {
     //remove deleted items
     for(let i = 0; i < this.items.length; i++) {
       if(this.items[i].deleteNow) {
-        currentTC.remove(this.items[i]);
         this.items[i].tile.entity = null;
         this.items.splice(i, 1);
         i--;
