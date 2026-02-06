@@ -28,7 +28,7 @@ function updateHomescreen() {
   hrt.renderText(new Pair(cs.w / 2, cs.h / -3), new TextNode("pixelFont", "MoleHole", 0, landscape ? cs.w / 30 : cs.h / 20, "center"), new Fill("#EEEEFF", 1));
   hrt.renderText(new Pair(cs.w / 2, (cs.h / -1.5) - (landscape ? cs.w / 40 : cs.h / 30)), new TextNode("pixelFont", `- ${landscape ? "click" : "tap"} anywhere to begin -`, 0, landscape ? cs.w / 50 : cs.h / 30, "center"), new Fill("#EEEEFF", 1));
   //game start
-  if(et.getClick("left") || tapData.realClick && bc.ready()) {
+  if((et.getClick("left") || tapData.realClick) && bc.ready()) {
     loadLevel(0);
   }
 }
@@ -36,6 +36,7 @@ function updateHomescreen() {
 function updateCamera() {
   //in freecam mode
   if(freecam) {
+    rt.zoom = 1;
     if(et.getKey("a")) {
       rt.camera.x -= 10 * rt.zoom;
     }
@@ -129,6 +130,10 @@ function updateHUD() {
   if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.skillTree.collider())) {
     gameState = "skillTree";
   }
+  //inventory tree access
+  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.inventory.collider())) {
+    gameState = "inventory";
+  }
 }
 //renders fail screen
 function updateFailscreen() {
@@ -154,7 +159,7 @@ function updateFailscreen() {
 }
 function updateSkillTree() {
   //clear canvas
-  cs.fillAll(new Fill("#000000", 1))
+  cs.fillAll(new Fill("#000000", 1));
   //exit button render
   hrt.renderImage(buttonData.exit.transform(), images.hud.exit);
   //exit button function
@@ -162,7 +167,19 @@ function updateSkillTree() {
     gameState = "inGame";
   }
   //main text and points
-  hrt.renderText(new Pair(cs.w / 2, (landscape ? cs.w : cs.h) / -30), new TextNode("pixelFont", `Upgrades: ${player.skillPoints}pts`, 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#ffffff", 1));
+  hrt.renderText(new Pair(cs.w / 2, (landscape ? cs.w : cs.h) / -30), new TextNode("pixelFont", `-Upgrades: ${player.skillPoints}pts-`, 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#ffffff", 1));
+}
+function updateInventory() {
+  //clear canvas
+  cs.fillAll(new Fill("#000000", 1));
+  //exit button render
+  hrt.renderImage(buttonData.exit.transform(), images.hud.exit);
+  //exit button function
+  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.exit.collider()) && bc.ready()) {
+    gameState = "inGame";
+  }
+  //main text and points
+  hrt.renderText(new Pair(cs.w / 2, (landscape ? cs.w : cs.h) / -30), new TextNode("pixelFont", "-Inventory-", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#ffffff", 1));
 }
 //updates the relationship between entity and tile
 function updateTERelationship(oldTile, entity, newTile) {
@@ -203,7 +220,7 @@ function drill(startTile, steps) {
 }
 //updates zoom on wheel event
 function updateZoom(e) {
-  if(gameState === "inGame") {
+  if(gameState === "inGame" && freecam) {
     let zoomFactor = e.deltaY / 1000;
     if(zoomFactor > 0) {
       if(rt.zoom < 3) {

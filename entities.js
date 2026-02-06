@@ -50,8 +50,7 @@ class Player {
       current: 20,
       max: 20,
       regenTime: 10,
-      regenMax: 10,
-      regenPoints: 0
+      regenMax: 10
     }
     //array containing all inventory items
     this.inventory = [];
@@ -207,9 +206,8 @@ class Player {
   }
   //runs once each real turn. deals with regen here
   turnPing() {
-    this.health.regenPoints -= this.health.regenPoints > 0 ? 1 : 0;
     this.health.regenTime -= this.health.regenTime > 0 ? 1 : 0;
-    if(this.health.regenTime <= 0 && this.health.current < this.health.max && this.health.regenPoints > 0) {
+    if(this.health.regenTime <= 0 && this.health.current < this.health.max) {
       this.health.current++;
       this.health.regenTime = this.health.regenMax;
     }
@@ -232,7 +230,6 @@ class Player {
   //adds xp and deals with skill points as needed
   addXP(count) {
     this.xp += count;
-    this.health.regenPoints += count * 10;
     let points = Math.floor(this.xp / 20);
     if(points > 0) {
       currentEC.add(new SPEffect(points));
@@ -242,7 +239,10 @@ class Player {
       this.health.max += 5;
       currentEC.add(new ParticleEffect(tk.pairMath(buttonData.skillTree.transform(), new Pair(0, hudTileSize / -2), "add"), "gravityBurst", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 10, 1, 100), true)
       if(!tutorial.hasFirstSP) {
-        dialogController.queued.push(new Dialog("Tutorial", "You got your first upgrade point! Click the star in the top left menu to choose an upgrade."))
+        dialogController.queued.concat([
+          new Dialog("Tutorial", "You got your first upgrade point!", false),
+          new Dialog("Tutorial", "Click the star in the top left menu to choose an upgrade.", false)
+        ]);
       }
     } else {
       currentEC.add(new XPEffect(count));
@@ -296,8 +296,7 @@ class NPC {
       current: 0,
       max: 0,
       regenTime: 0,
-      regenMax: 0,
-      regenPoints: 0
+      regenMax: 0
     };
     //base melee data
     this.melee = {
@@ -428,8 +427,7 @@ class Michael extends NPC {
       current: 10,
       max: 10,
       regenTime: 0,
-      regenMax: 0,
-      regenPoints: 0
+      regenMax: 0
     };
     //base melee data
     this.melee = {
@@ -480,8 +478,7 @@ class Minnie extends NPC {
       current: 10,
       max: 10,
       regenTime: 0,
-      regenMax: 0,
-      regenPoints: 0
+      regenMax: 0
     };
     //base melee data
     this.melee = {
@@ -560,8 +557,7 @@ class Maxwell extends NPC {
       current: 10,
       max: 10,
       regenTime: 0,
-      regenMax: 0,
-      regenPoints: 0
+      regenMax: 0
     };
     //base melee data
     this.melee = {
@@ -606,8 +602,7 @@ class Magnolia extends NPC {
       current: 10,
       max: 10,
       regenTime: 0,
-      regenMax: 0,
-      regenPoints: 0
+      regenMax: 0
     };
     //base melee data
     this.melee = {
@@ -670,8 +665,7 @@ class Enemy {
       current: 0,
       max: 0,
       regenTime: 0,
-      regenMax: 0,
-      regenPoints: 0
+      regenMax: 0
     };
     //base melee data
     this.melee = {

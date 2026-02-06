@@ -104,7 +104,7 @@ class NewLevelEffect extends Effect {
       this.renderTool.renderText(this.transform.duplicate().add(new Pair(0, landscape ? cs.w / 10 : cs.h / 10)), new TextNode("pixelFont", currentLevel.zone, 0, (cs.w / 15) * (this.remainingDuration / 150), "center"), new Fill("#FFFFFF", 1));
     } else {
       if(currentLevel.levelId !== 0) {
-        this.renderTool.renderText(this.transform, new TextNode("pixelFont", `-Level ${currentLevel.levelId}-`, 0, cs.w / 10, "center"), new Fill("#FFFFFF", this.remainingDuration / 150));
+        this.renderTool.renderText(this.transform, new TextNode("pixelFont", `-Floor ${currentLevel.levelId}-`, 0, cs.w / 10, "center"), new Fill("#FFFFFF", this.remainingDuration / 150));
       }
       this.renderTool.renderText(this.transform.duplicate().add(new Pair(0, landscape ? cs.w / 10 : cs.h / 10)), new TextNode("pixelFont", currentLevel.zone, 0, (cs.w / 15), "center"), new Fill("#FFFFFF", this.remainingDuration / 150));
     }
@@ -118,13 +118,18 @@ class Death extends Effect {
   update() {
     this.remainingDuration--;
     //fade out
-    this.entity.sprites.body.alpha = this.remainingDuration / this.duration;
-    if(this.entity.sprites?.hand) {
-      this.entity.sprites.hand.alpha = this.remainingDuration / this.duration;
-    }
-    if(this.entity.tile.visible) {
-      this.entity.health.current = this.entity.health.max
+    if(this.entity.eType === "nme") {
+      this.entity.sprite.alpha = this.remainingDuration / this.duration;
       this.entity.render();
+    } else {
+      this.entity.sprites.body.alpha = this.remainingDuration / this.duration;
+      if(this.entity.sprites?.hand) {
+        this.entity.sprites.hand.alpha = this.remainingDuration / this.duration;
+      }
+      if(this.entity.tile.visible) {
+        this.entity.health.current = this.entity.health.max
+        this.entity.render();
+      }
     }
   }
 }
@@ -208,7 +213,29 @@ class ParticleEffect extends Effect {
     }
   }
 }
-
+class PickupAnimation extends Effect {
+  constructor(item) {
+    super(35, item.transform.duplicate(), false);
+    this.item = item;
+    this.sprite = item.sprite.duplicate();
+    this.vel = tileSize / 7;
+    if(!tutorial.hasFirstItem) {
+      tutorial.hasFirstItem = true;
+      dialogController.queued.concat([
+        new Dialog("Tutorial", "You collected your first item!", false),
+        new Dialog("Tutorial", "Click the Marshall in the top left corner to take inventory.", false)
+      ]);
+    }
+  }
+  update() {
+    this.remainingDuration--;
+    this.vel -= 0.6;
+    this.sprite.y += this.vel;
+    [this.sprite.w, this.sprite.h] = [tileSize - (this.duration - this.remainingDuration), tileSize - (this.duration - this.remainingDuration)];
+    this.sprite.alpha = this.remainingDuration / this.duration;
+    rt.renderImage(this.item.transform, this.sprite);
+  }
+}
 //DIALOG CLASS
 //dialog instances go in the dialog controller.
 class Dialog {

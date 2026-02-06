@@ -182,6 +182,11 @@ const buttonData = {
     shape: new Rectangle(0, hudTileSize, hudTileSize),
     collider: () => {return new Collider(buttonData.skillTree.transform(), buttonData.skillTree.shape)}
   },
+  inventory: {
+    transform: () => {return new Pair(hudTileSize * 0.5, hudTileSize / -2)},
+    shape: new Rectangle(0, hudTileSize, hudTileSize),
+    collider: () => {return new Collider(buttonData.inventory.transform(), buttonData.inventory.shape)}
+  },
   exit: {
     transform: () => {return new Pair(cs.w - (hudTileSize / 2), hudTileSize / -2)},
     shape: new Rectangle(0, hudTileSize, hudTileSize),
@@ -250,5 +255,6 @@ const debug = {
 //tutorial data
 const tutorial = {
   stage: 0,
-  hasFirstSP: false
+  hasFirstSP: false,
+  hasFirstItem: false
 }

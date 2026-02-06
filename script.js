@@ -18,7 +18,7 @@ function update() {
     case "homescreen":
       updateHomescreen();
       break;
-      case "inGame":
+    case "inGame":
       cs.fillAll(new Fill("#000000", 1));
       updateCamera();
       currentTC.update();
@@ -31,6 +31,9 @@ function update() {
       break;
     case "skillTree":
       updateSkillTree();
+      break;
+    case "inventory":
+      updateInventory();
       break;
     case "gameOver":
       updateFailscreen();

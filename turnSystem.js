@@ -308,6 +308,7 @@ class ChestOpen extends Action {
     [this.duration, this.remainingDuration] = [1, 1];
     //npc being interacted with
     this.chest = chest;
+    currentEC.add(new Death(chest));
   }
   update() {
     this.chest.open();
@@ -346,7 +347,7 @@ class ItemCollect extends Action {
     //while running
     if(this.remainingDuration > 1) {
       this.actor.transform.rotationalIncrease(this.moveDirection, this.stepLength);
-    //last frame
+      //last frame
     } else {
       if(this.actor.type === "player") {
         currentLevel.reshade();
@@ -356,6 +357,8 @@ class ItemCollect extends Action {
       this.actor.animation.state = "idle";
       //update item relationship
       this.item.convert(this.actor);
+      //play pickup animation
+      currentEC.add(new PickupAnimation(this.item))
     }
   }
   complete() {
