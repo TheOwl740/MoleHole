@@ -130,6 +130,10 @@ function updateHUD() {
   if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.skillTree.collider())) {
     gameState = "skillTree";
   }
+  //effects screen access
+  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.effectsScreen.collider())) {
+    gameState = "effects";
+  }
   //inventory tree access
   if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.inventory.collider())) {
     gameState = "inventory";
@@ -223,7 +227,7 @@ function updateInventory() {
     hrt.renderImage(currentTransform, stackedInventory[i].item.sprite);
     //render quantity if > 1
     if(stackedInventory[i].quantity > 1) {
-      hrt.renderText(currentTransform.add(new Pair(tileSize * 0.3, tileSize * -0.4)), new TextNode("pixelFont", stackedInventory[i].quantity, 0, tileSize / 3, "left"), new Fill("#ffffff", 1));
+      hrt.renderText(new Pair(tileSize * 0.3, tileSize * -0.4).add(currentTransform), new TextNode("pixelFont", stackedInventory[i].quantity, 0, tileSize / 3, "left"), new Fill("#ffffff", 1));
     }
     //check for new selection
     if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, new Collider(currentTransform, new Rectangle(0, currentBox.dimensions.x, currentBox.dimensions.y))) && bc.ready()) {
@@ -248,7 +252,50 @@ function updateInventory() {
     hrt.renderText(new Pair((cs.w / 2) - (tileSize * 1.1), tileSize * -2.3), new TextNode("pixelFont", "Drop", 0, tileSize / 2, "center"), new Fill("#ffffff", 1));
     hrt.renderText(new Pair((cs.w / 2) + (tileSize * 1.1), tileSize * -2.3), new TextNode("pixelFont", inventorySelection.useText, 0, tileSize / 2, "center"), new Fill("#ffffff", 1));
     hrt.renderText(new Pair(cs.w / 2, tileSize * -1.5), new TextNode("pixelFont", "Selected: " + inventorySelection.name, 0, tileSize / 3, "center"), new Fill("#ffffff", 1));
-    //button activation    
+    //button activation
+    if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, new Collider(dropBox.transform, new Rectangle(0, dropBox.dimensions.x, dropBox.dimensions.y))) && bc.ready()) {
+
+    }
+    if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, new Collider(useBox.transform, new Rectangle(0, useBox.dimensions.x, useBox.dimensions.y))) && bc.ready()) {
+      gameState = "inGame";
+      inventorySelection.activate();
+      inventorySelection = null;
+    }
+  }
+}
+function updateEffectsScreen() {
+  //clear canvas
+  cs.fillAll(new Fill("#000000", 1));
+  //exit button render
+  hrt.renderImage(buttonData.exit.transform(), images.hud.exit);
+  //exit button function
+  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.exit.collider()) && bc.ready()) {
+    gameState = "inGame";
+  }
+  //main text and points
+  hrt.renderText(new Pair(cs.w / 2, (landscape ? cs.w : cs.h) / -30), new TextNode("pixelFont", "-Status Effects-", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#ffffff", 1));
+  //find odd number of tiles which fit within w bound
+  let hTileCount = Math.floor(cs.w / (tileSize * 1.2));
+  hTileCount -= ((hTileCount % 2) - 1) * -1;
+  //generate and render boxes
+  let currentBox;
+  let currentTransform;
+  let scaledIcon = null;
+  for(let i = 0; i < player.effects.length; i++) {
+    //place in inventory
+    currentTransform = new Pair(((i % hTileCount) - Math.floor(hTileCount / 2)) * tileSize * 1.2, Math.floor(i / hTileCount) * tileSize * -1.2).add(new Pair(cs.w / 2, tileSize * -3));
+    currentBox = new BlankTile(tileschema.hud, currentTransform, new Pair(tileSize * 1.1, tileSize * 1.1));
+    //render inventory tile
+    currentBox.render();
+    //render item
+    scaledIcon = player.effects[i].icon.duplicate();
+    scaledIcon.w = tileSize / 2;
+    scaledIcon.h = tileSize / 2;
+    hrt.renderImage(currentTransform, scaledIcon);
+    //check for new selection
+    if(tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, new Collider(currentTransform, new Rectangle(0, currentBox.dimensions.x, currentBox.dimensions.y)))) {
+      hrt.renderText(new Pair(cs.w / 2, tileSize * -1.5), new TextNode("pixelFont", `${player.effects[i].effectType}: ${player.effects[i].remainingDuration} turn${player.effects[i].remainingDuration > 1 ? "s" : ""} remaining.`, 0, tileSize / 3, "center"), new Fill("#ffffff", 1));
+    }
   }
 }
 //updates the relationship between entity and tile

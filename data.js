@@ -184,6 +184,11 @@ const buttonData = {
     shape: new Rectangle(0, hudTileSize, hudTileSize),
     collider: () => {return new Collider(buttonData.skillTree.transform(), buttonData.skillTree.shape)}
   },
+  effectsScreen: {
+    transform: () => {return new Pair(hudTileSize * 1.5, hudTileSize / -2)},
+    shape: new Rectangle(0, hudTileSize, hudTileSize),
+    collider: () => {return new Collider(buttonData.effectsScreen.transform(), buttonData.effectsScreen.shape)}
+  },
   inventory: {
     transform: () => {return new Pair(hudTileSize * 0.5, hudTileSize / -2)},
     shape: new Rectangle(0, hudTileSize, hudTileSize),
@@ -242,7 +247,33 @@ const tileschema = {
 const tutorial = {
   stage: 0,
   hasFirstSP: false,
-  hasFirstItem: false
+  hasFirstItem: false,
+  hasFirstEffect: false,
+  update: (currentPlayer) => {
+    if(currentPlayer.skillPoints > 0 && !tutorial.hasFirstSP) {
+      tutorial.hasFirstSP = true;
+      dialogController.queued.concat([
+        new Dialog("Tutorial", "You got your first upgrade point!", false),
+        new Dialog("Tutorial", "Click the star in the top left menu to choose an upgrade.", false)
+      ]);
+    }
+    if(currentPlayer.inventory.length > 0 && !tutorial.hasFirstItem) {
+      tutorial.hasFirstItem = true;
+      dialogController.queued.concat([
+        new Dialog("Tutorial", "You collected your first item!", false),
+        new Dialog("Tutorial", "Click the Marshall in the top left corner to take inventory.", false)
+      ]);
+    }
+    if(currentPlayer.effects > 0 && !tutorial.hasFirstEffect) {
+      tutorial.hasFirstEffect = true;
+      dialogController.queued.concat([
+        new Dialog("Tutorial", "You've recieved your first status effect!", false),
+        new Dialog("Tutorial", "Status effects provide bonuses or disadvantages like healing or poison.", false),
+        new Dialog("Tutorial", "They can apply to Marshall, or his enemies.", false),
+        new Dialog("Tutorial", "Click the health indicator in the top left menu to view active status effects.", false)
+      ]);
+    }
+  }
 };
 //debug options
 const debug = {

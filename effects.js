@@ -69,6 +69,17 @@ class DamageNumber extends Effect {
     }
   }
 }
+//damage number effect subclass
+class HealNumber extends Effect {
+  constructor(amount, entity) {
+    super(60, entity.transform, false);
+    this.amount = amount;
+  }
+  update() {
+    this.remainingDuration--;
+    this.renderTool.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "+" + this.amount, 0, (landscape ? cs.w / 50 : cs.h / 35), "center"), new Fill("#00eb00", this.remainingDuration / 60));
+  }
+}
 //xp gain effect
 class XPEffect extends Effect {
   constructor(xpCount) {
@@ -219,13 +230,6 @@ class PickupAnimation extends Effect {
     this.item = item;
     this.sprite = item.sprite.duplicate();
     this.vel = 10;
-    if(!tutorial.hasFirstItem) {
-      tutorial.hasFirstItem = true;
-      dialogController.queued.concat([
-        new Dialog("Tutorial", "You collected your first item!", false),
-        new Dialog("Tutorial", "Click the Marshall in the top left corner to take inventory.", false)
-      ]);
-    }
   }
   update() {
     this.remainingDuration--;

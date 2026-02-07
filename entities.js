@@ -1,5 +1,77 @@
 //entities.js contains all classes related to entities, including the player, npcs, nmes, and enemies.
 
+//STATUS EFFECTS
+class StatusEffect {
+  constructor(effectType, duration, targetEntity) {
+    this.type = "statusEffect";
+    this.effectType = effectType;
+    this.duration = duration;
+    this.remainingDuration = duration;
+    this.targetEntity = targetEntity;
+    //attempt to extend existing effect
+    let appliedToTarget = false;
+    for(let effIndex = 0; effIndex < targetEntity.effects.length; effIndex++) {
+      if(targetEntity.effects[effIndex].effectType === effectType) {
+        targetEntity.effects[effIndex].duration += this.duration;
+        targetEntity.effects[effIndex].remainingDuration += this.duration;
+        appliedToTarget = true;
+      }
+    }
+    //add as new if unextended
+    if(!appliedToTarget) {
+      this.targetEntity.effects.push(this);
+    }
+    //initial changes and icon setting
+    switch(this.effectType) {
+      case "healing":
+        this.icon = images.hud.miniIcons.duplicate().setActive(new Pair(1, 0));
+        break;
+      case "poison":
+        this.icon = images.hud.miniIcons.duplicate().setActive(new Pair(0, 2));
+        break;
+      case "haste":
+        this.icon = images.hud.miniIcons.duplicate().setActive(new Pair(1, 2));
+        this.targetEntity.moveTime /= 2;
+        break;
+    }
+  }
+  update() {
+    this.remainingDuration--;
+    //on deletion
+    if(this.remainingDuration <= 0) {
+      //delete effect
+      for(let effIndex = 0; effIndex < this.targetEntity.effects.length; effIndex++) {
+        if(this.targetEntity.effects[effIndex].effectType === this.effectType) {
+          this.targetEntity.effects.splice(effIndex, 1);
+        }
+      }
+      //final changes
+      switch(this.effectType) {
+        case "haste":
+          this.targetEntity.moveTime *= 2;
+          break;
+      }
+    //during main duration
+    } else {
+      //active changes
+      switch(this.effectType) {
+        case "healing":
+          let healFactor = Math.ceil(this.targetEntity.health.max * (this.remainingDuration / this.duration) * 0.25) + 1;
+          this.targetEntity.health.current += healFactor;
+          if(this.targetEntity.health.current > this.targetEntity.health.max) {
+            this.targetEntity.health.current = this.targetEntity.health.max;
+          }
+          currentEC.add(new HealNumber(healFactor, this.targetEntity));
+          break;
+      }
+    }
+  }
+  bubble() {
+    //icon bubble
+    currentEC.add(new ParticleEffect(this.targetEntity.transform, "float", this.icon, 1, 0.5, 70));
+  }
+}
+
 //PLAYER
 //player class controls normal entity things as well as xp.
 class Player {
@@ -29,6 +101,8 @@ class Player {
     this.forceMove = false;
     //current weapon slot
     this.weapon = null;
+    //status effects
+    this.effects = [];
     //sprite data
     this.leftFacing = true;
     this.sprites = {
@@ -129,12 +203,18 @@ class Player {
     this.sprites.body.hf = this.leftFacing;
     //image render
     rt.renderImage(this.transform, this.sprites.body);
+    //bubble attempt
+    this.effects.forEach((statusEffect) => {
+      if(tk.randomNum(0, 200) === 0) {
+        statusEffect.bubble();
+      }
+    });
   }
   runTurn() {
     //set last position
     this.lastPosition = this.tile.index;
     //wait action
-    if(this.targetIndex === null && clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.stopWait.collider())) {
+    if(this.targetIndex === null && clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.stopWait.collider()) && bc.ready()) {
       return new Wait(this);
     }
     //check if at target
@@ -154,7 +234,7 @@ class Player {
       }
     });
     //if there is no target and there is a targeting click
-    if(this.targetIndex === null && (landscape ? et.getClick("left") : tapData.realClick)) {
+    if(this.targetIndex === null && clicking && bc.ready()) {
       //get tile at click
       let clickedTile = currentLevel.getTile(landscape ? et.dCursor(rt) : tapData.rcObj.dTransform(rt));
       //if valid tile
@@ -204,13 +284,18 @@ class Player {
     }
     return null;
   }
-  //runs once each real turn. deals with regen here
+  //runs once each real turn
   turnPing() {
+    //regen
     this.health.regenTime -= this.health.regenTime > 0 ? 1 : 0;
     if(this.health.regenTime <= 0 && this.health.current < this.health.max) {
       this.health.current++;
       this.health.regenTime = this.health.regenMax;
     }
+    //update status effects
+    this.effects.forEach((statusEffect) => {
+      statusEffect.update();
+    });
   }
   //gets melee damage for an attack
   getMelee() {
@@ -238,12 +323,6 @@ class Player {
       this.health.current += 5;
       this.health.max += 5;
       currentEC.add(new ParticleEffect(tk.pairMath(buttonData.skillTree.transform(), new Pair(0, hudTileSize / -2), "add"), "gravityBurst", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 10, 1, 100, true))
-      if(!tutorial.hasFirstSP) {
-        dialogController.queued.concat([
-          new Dialog("Tutorial", "You got your first upgrade point!", false),
-          new Dialog("Tutorial", "Click the star in the top left menu to choose an upgrade.", false)
-        ]);
-      }
     } else {
       currentEC.add(new XPEffect(count));
     }
@@ -265,11 +344,13 @@ class NPC {
     this.parentLevel = tile.parentLevel;
     //assign tile
     updateTERelationship(null, this, this.tile);
+    //status effects
+    this.effects = [];
     //sprite data
+    this.leftFacing = true;
     this.sprites = {
       body: spriteLocation.body.duplicate(),
     };
-    this.leftFacing = true;
     //animation data
     this.animation = {
       state: "idle",
@@ -366,24 +447,24 @@ class NPC {
       } else if(this.animation.state === "jump") {
         this.sprites.body.setActive(new Pair(1, 1));
       } else if(this.animation.state === "attack") {
-      if(this.animation.deltaTime > 0.1) {
-        this.animation.deltaTime = 0;
-        switch(this.animation.frame) {
-          case 0:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(0, 0));
-            break;
-          case 1:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(0, 3));
-            break;
-          case 2:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(1, 3));
-            break;
-        }
-      } 
-    }
+        if(this.animation.deltaTime > 0.1) {
+          this.animation.deltaTime = 0;
+          switch(this.animation.frame) {
+            case 0:
+              this.animation.frame++;
+              this.sprites.body.setActive(new Pair(0, 0));
+              break;
+            case 1:
+              this.animation.frame++;
+              this.sprites.body.setActive(new Pair(0, 3));
+              break;
+            case 2:
+              this.animation.frame++;
+              this.sprites.body.setActive(new Pair(1, 3));
+              break;
+          }
+        } 
+      }
       //renders health bar
       if(this.health.current < this.health.max) {
         renderHealthbar(this, tileSize);
@@ -396,11 +477,20 @@ class NPC {
         this.sprites.hand.hf = this.leftFacing;
         rt.renderImage(this.transform, this.sprite.hand)
       }
+      //bubble attempt
+      this.effects.forEach((statusEffect) => {
+        if(tk.randomNum(0, 200) === 0) {
+          statusEffect.bubble();
+        }
+      });
     }
   }
   //fires each real turn
   turnPing() {
-
+    //update status effects
+    this.effects.forEach((statusEffect) => {
+      statusEffect.update();
+    });
   }
   //ai logic
   runTurn() {
@@ -630,7 +720,10 @@ class Enemy {
     this.parentLevel = tile.parentLevel;
     //assign tile
     updateTERelationship(null, this, this.tile);
+    //status effects
+    this.effects = [];
     //sprite data
+    this.leftFacing = true;
     this.sprites = {
       body: spriteLocation.body.duplicate(),
     };
@@ -640,7 +733,6 @@ class Enemy {
       deltaTime: 0,
       frame: 0
     }
-    this.leftFacing = true;
     //next turn time randomized
     this.nextTurn = tk.randomNum(0, 1000) / 1000;
     //ai state
@@ -732,24 +824,24 @@ class Enemy {
       } else if(this.animation.state === "jump") {
         this.sprites.body.setActive(new Pair(1, 1));
       } else if(this.animation.state === "attack") {
-      if(this.animation.deltaTime > 0.1) {
-        this.animation.deltaTime = 0;
-        switch(this.animation.frame) {
-          case 0:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(0, 0));
-            break;
-          case 1:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(0, 3));
-            break;
-          case 2:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(1, 3));
-            break;
-        }
-      } 
-    }
+        if(this.animation.deltaTime > 0.1) {
+          this.animation.deltaTime = 0;
+          switch(this.animation.frame) {
+            case 0:
+              this.animation.frame++;
+              this.sprites.body.setActive(new Pair(0, 0));
+              break;
+            case 1:
+              this.animation.frame++;
+              this.sprites.body.setActive(new Pair(0, 3));
+              break;
+            case 2:
+              this.animation.frame++;
+              this.sprites.body.setActive(new Pair(1, 3));
+              break;
+          }
+        } 
+      }
       //renders health bar
       if(this.health.current < this.health.max) {
         renderHealthbar(this, tileSize);
@@ -762,11 +854,20 @@ class Enemy {
         this.sprites.hand.hf = this.leftFacing;
         rt.renderImage(this.transform, this.sprites.hand)
       }
+      //bubble attempt
+      this.effects.forEach((statusEffect) => {
+        if(tk.randomNum(0, 200) === 0) {
+          statusEffect.bubble();
+        }
+      });
     }
   }
   //fires each real turn
   turnPing() {
-
+    //update status effects
+    this.effects.forEach((statusEffect) => {
+      statusEffect.update();
+    });
   }
   //basic ai logic
   runTurn() {
@@ -1048,6 +1149,7 @@ class Potion extends Item {
     this.name = "Potion of " + variety;
     this.stackable = true;
     this.useText = "Drink"
+    this.variety = variety;
     switch(variety) {
       case "health":
         this.sprite.setActive(new Pair(0, 0));
@@ -1066,6 +1168,26 @@ class Potion extends Item {
         break;
       case "damage":
         this.sprite.setActive(new Pair(1, 2));
+        break;
+    }
+  }
+  activate() {
+    switch(this.variety) {
+      case "health":
+        new StatusEffect("healing", 10, player);
+        currentEC.add(new ParticleEffect(player.transform, "float", images.hud.miniIcons.setActive(new Pair(1, 0)), 5, 0.5, 70));
+        break;
+      case "haste":
+        new StatusEffect("haste", 10, player);
+        currentEC.add(new ParticleEffect(player.transform, "float", images.hud.miniIcons.setActive(new Pair(1, 2)), 5, 0.5, 70));
+        break;
+      case "poison":
+        break;
+      case "levitation":
+        break;
+      case "shield":
+        break;
+      case "damage":
         break;
     }
   }

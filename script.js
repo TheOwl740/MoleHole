@@ -13,6 +13,7 @@ function update() {
   //update game based on state
   //update clicking
   clicking = (tapData.realClick || et.getClick("left"));
+  //update tutorial
   //state based function timeline
   switch(gameState) {
     case "homescreen":
@@ -20,6 +21,7 @@ function update() {
       break;
     case "inGame":
       cs.fillAll(new Fill("#000000", 1));
+      tutorial.update(player);
       updateCamera();
       currentTC.update();
       currentLevel.update();
@@ -34,6 +36,9 @@ function update() {
       break;
     case "inventory":
       updateInventory();
+      break;
+    case "effects":
+      updateEffectsScreen();
       break;
     case "gameOver":
       updateFailscreen();
