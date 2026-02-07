@@ -236,25 +236,29 @@ const tutorial = {
   update: (currentPlayer) => {
     if(currentPlayer.skillPoints > 0 && !tutorial.hasFirstSP) {
       tutorial.hasFirstSP = true;
-      dialogController.queued.concat([
+      dialogController.queued = dialogController.queued.concat([
         new Dialog("Tutorial", "You got your first upgrade point!", false),
-        new Dialog("Tutorial", "Click the star in the top left menu to choose an upgrade.", false)
+        new Dialog("Tutorial", "Upgrade points can be used to buy special bonuses.", false),
+        new Dialog("Tutorial", "Filling the star indicator by getting xp earns you more upgrade points.", false),
+        new Dialog("Tutorial", "Click the star/xp indicator icon in the top left to choose an upgrade.", false)
       ]);
     }
     if(currentPlayer.inventory.length > 0 && !tutorial.hasFirstItem) {
       tutorial.hasFirstItem = true;
-      dialogController.queued.concat([
+      dialogController.queued = dialogController.queued.concat([
         new Dialog("Tutorial", "You collected your first item!", false),
-        new Dialog("Tutorial", "Click the Marshall in the top left corner to take inventory.", false)
+        new Dialog("Tutorial", "Items are useful tools Marshall can use on his adventure.", false),
+        new Dialog("Tutorial", "They can be found throughout the dungeon.", false),
+        new Dialog("Tutorial", "Click the Marshall icon in the top left corner to take inventory.", false)
       ]);
     }
-    if(currentPlayer.effects > 0 && !tutorial.hasFirstEffect) {
+    if(currentPlayer.effects.length > 0 && !tutorial.hasFirstEffect) {
       tutorial.hasFirstEffect = true;
-      dialogController.queued.concat([
+      dialogController.queued = dialogController.queued.concat([
         new Dialog("Tutorial", "You've recieved your first status effect!", false),
         new Dialog("Tutorial", "Status effects provide bonuses or disadvantages like healing or poison.", false),
-        new Dialog("Tutorial", "They can apply to Marshall, or his enemies.", false),
-        new Dialog("Tutorial", "Click the health indicator in the top left menu to view active status effects.", false)
+        new Dialog("Tutorial", "They can apply to Marshall, or his enemies, and are indicated by floating bubbles.", false),
+        new Dialog("Tutorial", "Click the health indicator icon in the top left to view active status effects.", false)
       ]);
     }
   }
