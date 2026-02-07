@@ -237,7 +237,7 @@ class Player {
       this.xp -= points * 20;
       this.health.current += 5;
       this.health.max += 5;
-      currentEC.add(new ParticleEffect(tk.pairMath(buttonData.skillTree.transform(), new Pair(0, hudTileSize / -2), "add"), "gravityBurst", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 10, 1, 100), true)
+      currentEC.add(new ParticleEffect(tk.pairMath(buttonData.skillTree.transform(), new Pair(0, hudTileSize / -2), "add"), "gravityBurst", images.hud.miniIcons.duplicate().setActive(new Pair(0, 0)), 10, 1, 100, true))
       if(!tutorial.hasFirstSP) {
         dialogController.queued.concat([
           new Dialog("Tutorial", "You got your first upgrade point!", false),
@@ -969,40 +969,49 @@ class Chest extends NME {
     this.deleteNow = true;
     let lootSeed = tk.randomNum(0, 100 + (this.tier * 25))
     if(lootSeed < 10) {
-      this.loot = new Potion(this.transform, this.tile, "haste");
+      this.loot = new Potion(this.transform, this.tile, "haste", false);
     } else if(lootSeed < 20) {
-      this.loot = new Potion(this.transform, this.tile, "poison");
+      this.loot = new Potion(this.transform, this.tile, "poison", false);
     } else if(lootSeed < 30) {
-      this.loot = new Potion(this.transform, this.tile, "levitation");
+      this.loot = new Potion(this.transform, this.tile, "levitation", false);
     } else if(lootSeed < 40) {
-      this.loot = new Potion(this.transform, this.tile, "shield");
+      this.loot = new Potion(this.transform, this.tile, "shield", false);
     } else if(lootSeed < 50) {
-      this.loot = new Potion(this.transform, this.tile, "damage");
+      this.loot = new Potion(this.transform, this.tile, "damage", false);
     } else {
-      this.loot = new Potion(this.transform, this.tile, "health");
+      this.loot = new Potion(this.transform, this.tile, "health", false);
     }
   }
 }
 //item class
 class Item {
-  constructor(transform, tile, spriteLocation) {
+  constructor(transform, tile, spriteLocation, inventorySpawn) {
     //entity type
     this.eType = "item"
     //location data as entity
-    this.transform = transform;
-    this.tile = tile;
-    this.parentLevel = tile.parentLevel;
-    //assign tile
-    updateTERelationship(null, this, this.tile);
-    //owner data as item
-    this.owner = null;
+    if(inventorySpawn) {
+      this.convert(player);
+      this.tile = null;
+    } else {
+      this.transform = transform;
+      //assign tile
+      this.tile = tile;
+      this.parentLevel = tile.parentLevel;
+      updateTERelationship(null, this, this.tile);
+      //owner data as item
+      this.owner = null;
+      //removal boolean for the level
+      this.deleteNow = false;
+    }
     //sprite data
     this.sprite = spriteLocation.duplicate();
-    //removal boolean for the level
-    this.deleteNow = false;
     //subclass specific
     this.type;
     this.name;
+    //can stack with same name
+    this.stackable;
+    //text for display when selected in inventory
+    this.useText;
   }
   render() {
     if(this.tile.visible) {
@@ -1013,8 +1022,9 @@ class Item {
   convert(newOwner) {
     if(this.owner === null) {
       this.deleteNow = true;
-      this.parentLevel = null;
       this.owner = newOwner;
+      this.parentLevel = null;
+      this.transform = null;
       newOwner.inventory.push(this);
     } else {
       this.deleteNow = false;
@@ -1025,15 +1035,20 @@ class Item {
       updateTERelationship(null, this, this.tile);
     }
   }
+  //activates whatever the item does
+  activate() {
+
+  }
 }
 //potion item subclass
 class Potion extends Item {
-  constructor(transform, tile, potionType) {
-    super(transform, tile, images.items.potions);
+  constructor(transform, tile, variety, inventorySpawn) {
+    super(transform, tile, images.items.potions, inventorySpawn);
     this.type = "potion";
-    this.name = "Potion";
-    this.potionType = potionType;
-    switch(potionType) {
+    this.name = "Potion of " + variety;
+    this.stackable = true;
+    this.useText = "Drink"
+    switch(variety) {
       case "health":
         this.sprite.setActive(new Pair(0, 0));
         break;

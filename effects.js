@@ -214,11 +214,11 @@ class ParticleEffect extends Effect {
   }
 }
 class PickupAnimation extends Effect {
-  constructor(item) {
-    super(35, item.transform.duplicate(), false);
+  constructor(item, entity) {
+    super(35, entity.transform.duplicate(), false);
     this.item = item;
     this.sprite = item.sprite.duplicate();
-    this.vel = tileSize / 7;
+    this.vel = 10;
     if(!tutorial.hasFirstItem) {
       tutorial.hasFirstItem = true;
       dialogController.queued.concat([
@@ -233,7 +233,7 @@ class PickupAnimation extends Effect {
     this.sprite.y += this.vel;
     [this.sprite.w, this.sprite.h] = [tileSize - (this.duration - this.remainingDuration), tileSize - (this.duration - this.remainingDuration)];
     this.sprite.alpha = this.remainingDuration / this.duration;
-    rt.renderImage(this.item.transform, this.sprite);
+    rt.renderImage(this.transform, this.sprite);
   }
 }
 //DIALOG CLASS
@@ -245,20 +245,20 @@ class Dialog {
     this.isThought = isThought
     //assign tilescheme
     if(entity === "Tutorial") {
-      this.tileScheme = entityTS.nme;
+      this.tileScheme = tileschema.nme;
     } else {
       switch(entity.eType) {
         case "player":
-          this.tileScheme = entityTS.player;
+          this.tileScheme = tileschema.player;
           break;
         case "enemy":
-          this.tileScheme = entityTS.enemy;
+          this.tileScheme = tileschema.enemy;
           break;
         case "npc":
-          this.tileScheme = entityTS.npc;
+          this.tileScheme = tileschema.npc;
           break;
         default:
-          this.tileScheme = entityTS.nme;
+          this.tileScheme = tileschema.nme;
           break;
       }
     }

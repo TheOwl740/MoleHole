@@ -36,6 +36,8 @@ let currentPC = null;
 //effect controller objects
 let currentEC = null;
 let menuEC = null;
+//inventory item selection
+let inventorySelection = null;
 //landscape bool for multiplatform rendering
 const landscape = cs.w > cs.h;
 //tilesize for rendering tiles
@@ -229,11 +231,18 @@ const dialogController = {
   }
 }
 //tileschema for dialog boxes of different entities
-const entityTS = {
+const tileschema = {
   player: new TileScheme(hrt, new Fill("#1da7a9", 1), new Border("#199092", 1, 5, "bevel"), new Border("#22bbbd", 1, 3, "bevel"), new Fill("#000000", 1)),
   enemy: new TileScheme(hrt, new Fill("#a91d1d", 1), new Border("#921919", 1, 5, "bevel"), new Border("#bd2222", 1, 3, "bevel"), new Fill("#000000", 1)),
   npc: new TileScheme(hrt, new Fill("#3ba91d", 1), new Border("#259219", 1, 5, "bevel"), new Border("#32bd22", 1, 3, "bevel"), new Fill("#000000", 1)),
-  nme: new TileScheme(hrt, new Fill("#a4a4a4", 1), new Border("#949494", 1, 5, "bevel"), new Border("#cfcfcf", 1, 3, "bevel"), new Fill("#000000", 1))
+  nme: new TileScheme(hrt, new Fill("#a4a4a4", 1), new Border("#949494", 1, 5, "bevel"), new Border("#cfcfcf", 1, 3, "bevel"), new Fill("#000000", 1)),
+  hud: new TileScheme(hrt, new Fill("#464646", 1), new Border("#585858", 1, 5, "bevel"), new Border("#7a7a7a", 1, 3, "bevel"), new Fill("#ffffff", 1))
+};
+//tutorial data
+const tutorial = {
+  stage: 0,
+  hasFirstSP: false,
+  hasFirstItem: false
 };
 //debug options
 const debug = {
@@ -252,9 +261,3 @@ const debug = {
     updateTERelationship(player.tile, player, targetTile);
   }
 };
-//tutorial data
-const tutorial = {
-  stage: 0,
-  hasFirstSP: false,
-  hasFirstItem: false
-}

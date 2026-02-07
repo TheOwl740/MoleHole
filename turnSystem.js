@@ -358,7 +358,7 @@ class ItemCollect extends Action {
       //update item relationship
       this.item.convert(this.actor);
       //play pickup animation
-      currentEC.add(new PickupAnimation(this.item))
+      currentEC.add(new PickupAnimation(this.item, this.actor))
     }
   }
   complete() {

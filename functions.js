@@ -36,7 +36,6 @@ function updateHomescreen() {
 function updateCamera() {
   //in freecam mode
   if(freecam) {
-    rt.zoom = 1;
     if(et.getKey("a")) {
       rt.camera.x -= 10 * rt.zoom;
     }
@@ -49,8 +48,9 @@ function updateCamera() {
     if(et.getKey("s")) {
       rt.camera.y -= 10 * rt.zoom;
     }
-  //in player locked mode
+    //in player locked mode
   } else {
+    rt.zoom = 1;
     rt.camera = new Pair(player.transform.x - (cs.w / 2), player.transform.y + (cs.h / 2));
   }
 }
@@ -177,9 +177,79 @@ function updateInventory() {
   //exit button function
   if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.exit.collider()) && bc.ready()) {
     gameState = "inGame";
+    inventorySelection = null;
   }
   //main text and points
   hrt.renderText(new Pair(cs.w / 2, (landscape ? cs.w : cs.h) / -30), new TextNode("pixelFont", "-Inventory-", 0, (landscape ? cs.w : cs.h) / 30, "center"), new Fill("#ffffff", 1));
+  //generate sorted inventory
+  let playerInventory = [].concat(player.inventory);
+  //sorted nodes contain quantity data
+  let stackedInventory = [];
+  //repeat until all inventory items processed
+  while(playerInventory.length > 0) {
+    let itemAdded = false;
+    if(playerInventory[0].stackable) {
+      stackedInventory.forEach((itemNode) => {
+        if(itemNode.item.name === playerInventory[0].name) {
+          itemNode.quantity++;
+          itemAdded = true;
+        }
+      });
+    }
+    //add item if not stacked
+    if(!itemAdded) {
+      stackedInventory.push({quantity: 1, item: playerInventory[0]});
+    }
+    //remove processed item
+    playerInventory.shift();
+  }
+  //sort stacks
+  stackedInventory.sort((a, b) => {
+    return a.item.name.localeCompare(b.item.name);
+  });
+  //find odd number of tiles which fit within w bound
+  let hTileCount = Math.floor(cs.w / (tileSize * 1.2));
+  hTileCount -= ((hTileCount % 2) - 1) * -1;
+  //generate and render boxes
+  let currentBox;
+  let currentTransform;
+  for(let i = 0; i < stackedInventory.length; i++) {
+    //place in inventory
+    currentTransform = new Pair(((i % hTileCount) - Math.floor(hTileCount / 2)) * tileSize * 1.2, Math.floor(i / hTileCount) * tileSize * -1.2).add(new Pair(cs.w / 2, tileSize * -4));
+    currentBox = new BlankTile(tileschema.hud, currentTransform, new Pair(tileSize * 1.1, tileSize * 1.1));
+    //render inventory tile
+    currentBox.render();
+    //render item
+    hrt.renderImage(currentTransform, stackedInventory[i].item.sprite);
+    //render quantity if > 1
+    if(stackedInventory[i].quantity > 1) {
+      hrt.renderText(currentTransform.add(new Pair(tileSize * 0.3, tileSize * -0.4)), new TextNode("pixelFont", stackedInventory[i].quantity, 0, tileSize / 3, "left"), new Fill("#ffffff", 1));
+    }
+    //check for new selection
+    if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, new Collider(currentTransform, new Rectangle(0, currentBox.dimensions.x, currentBox.dimensions.y))) && bc.ready()) {
+      if(inventorySelection?.name === stackedInventory[i].item.name) {
+        inventorySelection = null;
+      } else {
+        inventorySelection = stackedInventory[i].item;
+      }
+    }
+    //highlight selection
+    if(inventorySelection?.name === stackedInventory[i].item.name) {
+      hrt.renderRectangle(currentTransform, new Rectangle(0, currentBox.dimensions.x, currentBox.dimensions.y), new Fill("#ffffff", 0.2), null);
+    }
+  }
+  //if selected item, render
+  if(inventorySelection) {
+    //draw buttons and selection readout
+    let dropBox = new BlankTile(tileschema.hud, new Pair((cs.w / 2) - (tileSize * 1.1), tileSize * -2.3), new Pair(tileSize * 2, tileSize * 0.75));
+    let useBox = new BlankTile(tileschema.hud, new Pair((cs.w / 2) + (tileSize * 1.1), tileSize * -2.3), new Pair(tileSize * 2, tileSize * 0.75));
+    dropBox.render();
+    useBox.render();
+    hrt.renderText(new Pair((cs.w / 2) - (tileSize * 1.1), tileSize * -2.3), new TextNode("pixelFont", "Drop", 0, tileSize / 2, "center"), new Fill("#ffffff", 1));
+    hrt.renderText(new Pair((cs.w / 2) + (tileSize * 1.1), tileSize * -2.3), new TextNode("pixelFont", inventorySelection.useText, 0, tileSize / 2, "center"), new Fill("#ffffff", 1));
+    hrt.renderText(new Pair(cs.w / 2, tileSize * -1.5), new TextNode("pixelFont", "Selected: " + inventorySelection.name, 0, tileSize / 3, "center"), new Fill("#ffffff", 1));
+    //button activation    
+  }
 }
 //updates the relationship between entity and tile
 function updateTERelationship(oldTile, entity, newTile) {
