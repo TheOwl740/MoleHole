@@ -61,11 +61,16 @@ class DamageNumber extends Effect {
   constructor(attackAction) {
     super(60, attackAction.targetEntity.transform, false);
     this.sourceAttack = attackAction;
+    this.blocked = attackAction.targetEntity.health.shield > 0;
   }
   update() {
     this.remainingDuration--;
     if(this.sourceAttack.actor.tile.visible) {
-      this.renderTool.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "-" + this.sourceAttack.damage, 0, (landscape ? cs.w / 50 : cs.h / 35), "center"), new Fill(this.sourceAttack.surprise ? "#ffff00" : "#ff0202", this.remainingDuration / 60));
+      if(this.blocked) {
+        this.renderTool.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "Shielded!", 0, (landscape ? cs.w / 50 : cs.h / 35), "center"), new Fill("#9b009b", this.remainingDuration / this.duration));
+      } else {
+        this.renderTool.renderText(this.transform.add(new Pair(Math.sin(ec / 10) * 0.1, 0.1)), new TextNode("pixelFont", "-" + this.sourceAttack.damage, 0, (landscape ? cs.w / 50 : cs.h / 35), "center"), new Fill(this.sourceAttack.surprise ? "#ffff00" : "#ff0202", this.remainingDuration / this.duration));
+      }
     }
   }
 }
@@ -133,10 +138,7 @@ class Death extends Effect {
       this.entity.sprite.alpha = this.remainingDuration / this.duration;
       this.entity.render();
     } else {
-      this.entity.sprites.body.alpha = this.remainingDuration / this.duration;
-      if(this.entity.sprites?.hand) {
-        this.entity.sprites.hand.alpha = this.remainingDuration / this.duration;
-      }
+      this.entity.sprite.alpha = this.remainingDuration / this.duration;
       if(this.entity.tile.visible) {
         this.entity.health.current = this.entity.health.max
         this.entity.render();

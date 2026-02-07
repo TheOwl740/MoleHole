@@ -63,33 +63,17 @@ const images = {
     speechBubble: new Sprite(tk.generateImage("Assets/HUD/speechBubble.png"), 1, 0, 0, 0, hudTileSize, hudTileSize, false, false, 32, 32),
     miniIcons: new Sprite(tk.generateImage("Assets/HUD/miniIcons.png"), 1, 1, 0, 0, hudTileSize / 4, hudTileSize / 4, false, false, 9, 9)
   },
-  moles: {
-    marshall: {
-      body: new Sprite(tk.generateImage("Assets/Moles/Marshall/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
-    },
-    minnie: {
-      body: new Sprite(tk.generateImage("Assets/Moles/Minnie/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
-    },
-    maxwell: {
-      body: new Sprite(tk.generateImage("Assets/Moles/Maxwell/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
-    },
-    madeline: {
-      body: new Sprite(tk.generateImage("Assets/Moles/Madeline/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
-    },
-    magnolia: {
-      body: new Sprite(tk.generateImage("Assets/Moles/Magnolia/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
-    },
-    michael: {
-      body: new Sprite(tk.generateImage("Assets/Moles/Michael/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
-    }
+  marshall: new Sprite(tk.generateImage("Assets/marshall.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32),
+  npcs: {
+    minnie: new Sprite(tk.generateImage("Assets/NPCs/minnie.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32),
+    maxwell: new Sprite(tk.generateImage("Assets/NPCs/maxwell.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32),
+    madeline: new Sprite(tk.generateImage("Assets/NPCs/madeline.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32),
+    magnolia: new Sprite(tk.generateImage("Assets/NPCs/magnolia.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32),
+    michael: new Sprite(tk.generateImage("Assets/NPCs/michael.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
   },
   enemies: {
-    wigglyWorm: {
-      body: new Sprite(tk.generateImage("Assets/Enemies/WigglyWorm/body.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32)
-    },
-    spiderling: {
-      body: new Sprite(tk.generateImage("Assets/Enemies/Spiderling/body.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32)
-    }
+    wigglyWorm: new Sprite(tk.generateImage("Assets/Enemies/WigglyWorm.png"), 1, 0, 0, tileSize / 3, tileSize, tileSize, false, false, 32, 32),
+    spiderling: new Sprite(tk.generateImage("Assets/Enemies/Spiderling.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32)
   },
   nmes: {
     chests: new Sprite(tk.generateImage("Assets/NMEs/chests.png"), 1, 0, 0, 0, tileSize, tileSize, false, false, 32, 32)
@@ -290,5 +274,13 @@ const debug = {
   teleport: (targetTile) => {
     player.transform = targetTile.transform.duplicate();
     updateTERelationship(player.tile, player, targetTile);
+  },
+  getPotions: () => {
+    player.inventory.push(new Potion(null, null, "health", player));
+    player.inventory.push(new Potion(null, null, "poison", player));
+    player.inventory.push(new Potion(null, null, "strength", player));
+    player.inventory.push(new Potion(null, null, "levitation", player));
+    player.inventory.push(new Potion(null, null, "shield", player));
+    player.inventory.push(new Potion(null, null, "haste", player));
   }
 };

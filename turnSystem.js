@@ -259,7 +259,7 @@ class Shove extends Action {
         updateTERelationship(this.targetEntity.tile, this.targetEntity, this.targetTile);
       }
       //do fall animation if applicable
-      if(this.targetTile.type === "pit") {
+      if(this.targetTile.type === "pit" && !this.targetEntity.flying) {
         currentTC.currentAction = new Fall(this.targetEntity);
       }
     }
@@ -306,7 +306,6 @@ class ChestOpen extends Action {
     super(actor, 1);
     this.type = "chestOpen";
     [this.duration, this.remainingDuration] = [1, 1];
-    //npc being interacted with
     this.chest = chest;
     currentEC.add(new Death(chest));
   }
@@ -316,6 +315,23 @@ class ChestOpen extends Action {
   }
   complete() {
     this.chest.open();
+  }
+}
+class ItemUse extends Action {
+  constructor(actor, item) {
+    super(actor, 1);
+    this.type = "itemUse";
+    [this.duration, this.remainingDuration] = [10, 10];
+    this.item = item;
+  }
+  update() {
+    this.actor.animation.state = "idle";
+    if(this.remainingDuration === 1) {
+      this.item.activate();
+    }
+  }
+  complete() {
+    this.item.activate();
   }
 }
 class ItemCollect extends Action {
@@ -382,18 +398,18 @@ class Fall extends Action {
     //on start
     if(this.remainingDuration === this.duration) {
       this.actor.animation.state = "jump";
-      this.actor.sprites.body.y = tileSize / 12;
+      this.actor.sprite.y = tileSize / 12;
     }
     //during animation
-    this.actor.sprites.body.w *= 0.9;
-    this.actor.sprites.body.h *= 0.9;
-    this.actor.sprites.body.r += 12;
-    this.actor.sprites.body.alpha = this.remainingDuration / this.duration;
+    this.actor.sprite.w *= 0.9;
+    this.actor.sprite.h *= 0.9;
+    this.actor.sprite.r += 12;
+    this.actor.sprite.alpha = this.remainingDuration / this.duration;
     //at end
     if(this.remainingDuration === 1) {
       //reset sprite and animation
       this.actor.animation.state = "idle";
-      this.actor.sprites.body = this.savedSprite;
+      this.actor.sprite = this.savedSprite;
       //set new position or kill (pits are disabled f1)
       if(this.actor.type === "player") {
         this.actor.health.current /= 2;

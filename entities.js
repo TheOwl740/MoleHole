@@ -33,6 +33,17 @@ class StatusEffect {
         this.icon = images.hud.miniIcons.duplicate().setActive(new Pair(1, 2));
         this.targetEntity.moveTime /= 2;
         break;
+      case "levitation":
+        this.icon = images.hud.miniIcons.duplicate().setActive(new Pair(0, 4));
+        this.targetEntity.flying = true;
+        break;
+      case "strength":
+        this.icon = images.hud.miniIcons.duplicate().setActive(new Pair(1, 4));
+        break;
+      case "shield":
+        this.icon = images.hud.miniIcons.duplicate().setActive(new Pair(0, 5));
+        this.targetEntity.health.shield = 3;
+        break;
     }
   }
   update() {
@@ -49,6 +60,12 @@ class StatusEffect {
       switch(this.effectType) {
         case "haste":
           this.targetEntity.moveTime *= 2;
+          break;
+        case "shield":
+          this.targetEntity.health.shield = 0;
+          break;
+        case "levitation":
+          this.targetEntity.flying = this.targetEntity.canFly;
           break;
       }
     //during main duration
@@ -101,13 +118,16 @@ class Player {
     this.forceMove = false;
     //current weapon slot
     this.weapon = null;
+    //boolean flying capability
+    this.flying = false;
+    this.canFly = false;
+    //queued item for use in next turn from inventory
+    this.queuedItemUse = null;
     //status effects
     this.effects = [];
     //sprite data
     this.leftFacing = true;
-    this.sprites = {
-      body: images.moles.marshall.body.duplicate()
-    }
+    this.sprite = images.marshall.duplicate();
     //animation data
     this.animation = {
       state: "idle",
@@ -134,75 +154,82 @@ class Player {
     }
   }
   render() {
-    //animation frame update
-    this.animation.deltaTime += gt.deltaTime;
-    if(this.animation.state === "idle") {
-      if(this.animation.deltaTime > 0.2) {
-        this.animation.deltaTime = 0;
-        switch(this.animation.frame) {
-          case 0:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(0, 0));
-            break;
-          case 1:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(1, 0));
-            break;
-          case 2:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(0, 1));
-            break;
-          case 3:
-            this.animation.frame = 0;
-            this.sprites.body.setActive(new Pair(1, 0));
-            break;
-          default:
-            this.animation.frame = 0;
-            this.sprites.body.setActive(new Pair(2, 1));
+    //cancel animations and just play jump if levitating
+    if(this.flying) {
+      this.sprite.setActive(new Pair(1, 1));
+      this.sprite.y = (tileSize / 2) + (Math.sin(ec / 20) * 5);
+    } else {
+      this.sprite.y = tileSize / 3;
+      //animation frame update
+      this.animation.deltaTime += gt.deltaTime;
+      if(this.animation.state === "idle") {
+        if(this.animation.deltaTime > 0.2) {
+          this.animation.deltaTime = 0;
+          switch(this.animation.frame) {
+            case 0:
+              this.animation.frame++;
+              this.sprite.setActive(new Pair(0, 0));
+              break;
+            case 1:
+              this.animation.frame++;
+              this.sprite.setActive(new Pair(1, 0));
+              break;
+            case 2:
+              this.animation.frame++;
+              this.sprite.setActive(new Pair(0, 1));
+              break;
+            case 3:
+              this.animation.frame = 0;
+              this.sprite.setActive(new Pair(1, 0));
+              break;
+            default:
+              this.animation.frame = 0;
+              this.sprite.setActive(new Pair(2, 1));
+          }
         }
+      } else if(this.animation.state === "move") {
+        if(this.animation.deltaTime > 0.1) {
+          this.animation.deltaTime = 0;
+          switch(this.animation.frame) {
+            case 0:
+              this.animation.frame++;
+              this.sprite.setActive(new Pair(0, 2));
+              break;
+            case 1:
+              this.animation.frame = 0;
+              this.sprite.setActive(new Pair(1, 2));
+              break;
+            default:
+              this.animation.frame = 0;
+              this.sprite.setActive(new Pair(1, 2));
+          }
+        }
+      } else if(this.animation.state === "jump") {
+        this.sprite.setActive(new Pair(1, 1));
+      } else if(this.animation.state === "attack") {
+        if(this.animation.deltaTime > 0.1) {
+          this.animation.deltaTime = 0;
+          switch(this.animation.frame) {
+            case 0:
+              this.animation.frame++;
+              this.sprite.setActive(new Pair(0, 0));
+              break;
+            case 1:
+              this.animation.frame++;
+              this.sprite.setActive(new Pair(0, 3));
+              break;
+            case 2:
+              this.animation.frame++;
+              this.sprite.setActive(new Pair(1, 3));
+              break;
+          }
+        } 
       }
-    } else if(this.animation.state === "move") {
-      if(this.animation.deltaTime > 0.1) {
-        this.animation.deltaTime = 0;
-        switch(this.animation.frame) {
-          case 0:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(0, 2));
-            break;
-          case 1:
-            this.animation.frame = 0;
-            this.sprites.body.setActive(new Pair(1, 2));
-            break;
-          default:
-            this.animation.frame = 0;
-            this.sprites.body.setActive(new Pair(1, 2));
-        }
-      }
-    } else if(this.animation.state === "jump") {
-      this.sprites.body.setActive(new Pair(1, 1));
-    } else if(this.animation.state === "attack") {
-      if(this.animation.deltaTime > 0.1) {
-        this.animation.deltaTime = 0;
-        switch(this.animation.frame) {
-          case 0:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(0, 0));
-            break;
-          case 1:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(0, 3));
-            break;
-          case 2:
-            this.animation.frame++;
-            this.sprites.body.setActive(new Pair(1, 3));
-            break;
-        }
-      } 
     }
     //update direction
-    this.sprites.body.hf = this.leftFacing;
+    this.sprite.hf = this.leftFacing;
     //image render
-    rt.renderImage(this.transform, this.sprites.body);
+    rt.renderImage(this.transform, this.sprite);
     //bubble attempt
     this.effects.forEach((statusEffect) => {
       if(tk.randomNum(0, 200) === 0) {
@@ -211,6 +238,15 @@ class Player {
     });
   }
   runTurn() {
+    //fall check
+    if(this.tile.type === "pit" && !this.flying) {
+      return new Fall(this);
+    }
+    if(this.queuedItemUse) {
+      let tempItem = this.queuedItemUse;
+      this.queuedItemUse = null;
+      return new ItemUse(this, tempItem);
+    }
     //set last position
     this.lastPosition = this.tile.index;
     //wait action
@@ -300,16 +336,25 @@ class Player {
   //gets melee damage for an attack
   getMelee() {
     let baseDamage = this.melee.damage + (this.weapon === null ? 0 : this.weapon.damage);
+    this.effects.forEach((effect) => {
+      if(effect.effectType === "strength") {
+        baseDamage *= 1.5;
+      }
+    });
     return tk.randomNum(Math.floor(baseDamage * 0.6), Math.floor(baseDamage * 1.4));
   }
   //takes damage to the player
   damage(attackAction) {
-    this.health.current -= attackAction.damage;
-    this.targetIndex = null;
-    this.movePath = null;
-    this.forceMove = false;
-    if(this.health.current < 1) {
-      gameState = "gameOver";
+    if(this.health.shield > 0) {
+      this.health.shield--;
+    } else {
+      this.health.current -= attackAction.damage;
+      this.targetIndex = null;
+      this.movePath = null;
+      this.forceMove = false;
+      if(this.health.current < 1) {
+        gameState = "gameOver";
+      }
     }
   }
   //adds xp and deals with skill points as needed
@@ -344,13 +389,14 @@ class NPC {
     this.parentLevel = tile.parentLevel;
     //assign tile
     updateTERelationship(null, this, this.tile);
+    //boolean flying capability
+    this.flying = false;
+    this.canFly = false;
     //status effects
     this.effects = [];
     //sprite data
     this.leftFacing = true;
-    this.sprites = {
-      body: spriteLocation.body.duplicate(),
-    };
+    this.sprite = spriteLocation.duplicate();
     //animation data
     this.animation = {
       state: "idle",
@@ -387,7 +433,11 @@ class NPC {
   }
   //recieves damage from an attack action
   damage(attackAction) {
-    this.health.current -= attackAction.damage;
+    if(this.health.shield > 0) {
+      this.health.shield--;
+    } else {
+      this.health.current -= attackAction.damage;
+    }
   }
   //returns melee damage based on melee and weapon
   getMelee() {
@@ -408,23 +458,23 @@ class NPC {
           switch(this.animation.frame) {
             case 0:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 0));
+              this.sprite.setActive(new Pair(0, 0));
               break;
             case 1:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(1, 0));
+              this.sprite.setActive(new Pair(1, 0));
               break;
             case 2:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 1));
+              this.sprite.setActive(new Pair(0, 1));
               break;
             case 3:
               this.animation.frame = 0;
-              this.sprites.body.setActive(new Pair(1, 0));
+              this.sprite.setActive(new Pair(1, 0));
               break;
             default:
               this.animation.frame = 0;
-              this.sprites.body.setActive(new Pair(2, 1));
+              this.sprite.setActive(new Pair(2, 1));
           }
         }
       } else if(this.animation.state === "move") {
@@ -433,34 +483,34 @@ class NPC {
           switch(this.animation.frame) {
             case 0:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 2));
+              this.sprite.setActive(new Pair(0, 2));
               break;
             case 1:
               this.animation.frame = 0;
-              this.sprites.body.setActive(new Pair(1, 2));
+              this.sprite.setActive(new Pair(1, 2));
               break;
             default:
               this.animation.frame = 0;
-              this.sprites.body.setActive(new Pair(1, 2));
+              this.sprite.setActive(new Pair(1, 2));
           }
         }
       } else if(this.animation.state === "jump") {
-        this.sprites.body.setActive(new Pair(1, 1));
+        this.sprite.setActive(new Pair(1, 1));
       } else if(this.animation.state === "attack") {
         if(this.animation.deltaTime > 0.1) {
           this.animation.deltaTime = 0;
           switch(this.animation.frame) {
             case 0:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 0));
+              this.sprite.setActive(new Pair(0, 0));
               break;
             case 1:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 3));
+              this.sprite.setActive(new Pair(0, 3));
               break;
             case 2:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(1, 3));
+              this.sprite.setActive(new Pair(1, 3));
               break;
           }
         } 
@@ -470,13 +520,8 @@ class NPC {
         renderHealthbar(this, tileSize);
       }
       //body facing update and render
-      this.sprites.body.hf = this.leftFacing;
-      rt.renderImage(this.transform, this.sprites.body);
-      //hand facing update and render if applicabb;e
-      if(this.sprites.hand) {
-        this.sprites.hand.hf = this.leftFacing;
-        rt.renderImage(this.transform, this.sprite.hand)
-      }
+      this.sprite.hf = this.leftFacing;
+      rt.renderImage(this.transform, this.sprite);
       //bubble attempt
       this.effects.forEach((statusEffect) => {
         if(tk.randomNum(0, 200) === 0) {
@@ -494,7 +539,10 @@ class NPC {
   }
   //ai logic
   runTurn() {
-
+    //fall check
+    if(this.tile.type === "pit" && !this.flying) {
+      return new Fall(this);
+    }
   }
   //updates the path to the current target
   updatePath() {
@@ -503,7 +551,7 @@ class NPC {
 }
 class Michael extends NPC {
   constructor(transform, tile) {
-    super(transform, tile, images.moles.michael);
+    super(transform, tile, images.npcs.michael);
     this.type = "michael mole";
     this.name = "Michael";
     //time elapsed by one tile movement
@@ -530,6 +578,10 @@ class Michael extends NPC {
     
   }
   runTurn() {
+    //fall check
+    if(this.tile.type === "pit" && !this.flying) {
+      return new Fall(this);
+    }
     switch(tutorial.stage) {
       case 3:
         if(this.tile.index.isEqualTo(tk.pairMath(player.tile.index, new Pair(0, 1), "add"))) {
@@ -554,7 +606,7 @@ class Michael extends NPC {
 }
 class Minnie extends NPC {
   constructor(transform, tile) {
-    super(transform, tile, images.moles.minnie);
+    super(transform, tile, images.npcs.minnie);
     this.type = "minnie mole";
     this.name = "Minnie";
     //time elapsed by one tile movement
@@ -599,6 +651,10 @@ class Minnie extends NPC {
     }
   }
   runTurn() {
+    //fall check
+    if(this.tile.type === "pit" && !this.flying) {
+      return new Fall(this);
+    }
     switch(tutorial.stage) {
       case 0:
         dialogController.queued.push(new Dialog(this, "... marshall... MARSHALL!", false));
@@ -633,7 +689,7 @@ class Minnie extends NPC {
 }
 class Maxwell extends NPC {
   constructor(transform, tile) {
-    super(transform, tile, images.moles.maxwell);
+    super(transform, tile, images.npcs.maxwell);
     this.type = "maxwell mole";
     this.name = "Maxwell";
     //time elapsed by one tile movement
@@ -661,6 +717,10 @@ class Maxwell extends NPC {
     }
   }
   runTurn() {
+    //fall check
+    if(this.tile.type === "pit" && !this.flying) {
+      return new Fall(this);
+    }
     if(tutorial.stage === 4) {
       this.targetIndex = player.tile.index;
       this.updatePath();
@@ -676,7 +736,7 @@ class Maxwell extends NPC {
 }
 class Magnolia extends NPC {
   constructor(transform, tile) {
-    super(transform, tile, images.moles.magnolia);
+    super(transform, tile, images.npcs.magnolia);
     this.type = "magnolia mole";
     this.name = "Magnolia";
     //time elapsed by one tile movement
@@ -701,6 +761,10 @@ class Magnolia extends NPC {
     };
   }
   runTurn() {
+    //fall check
+    if(this.tile.type === "pit" && !this.flying) {
+      return new Fall(this);
+    }
     return new Wait(this);
   }
 }
@@ -720,13 +784,14 @@ class Enemy {
     this.parentLevel = tile.parentLevel;
     //assign tile
     updateTERelationship(null, this, this.tile);
+    //boolean flying capability
+    this.flying = false;
+    this.canFly = false;
     //status effects
     this.effects = [];
     //sprite data
     this.leftFacing = true;
-    this.sprites = {
-      body: spriteLocation.body.duplicate(),
-    };
+    this.sprite = spriteLocation.duplicate(),
     //animation data
     this.animation = {
       state: "idle",
@@ -767,7 +832,11 @@ class Enemy {
   }
   //recieves damage from an attack action
   damage(attackAction) {
-    this.health.current -= attackAction.damage;
+    if(this.health.shield > 0) {
+      this.health.shield--;
+    } else {
+      this.health.current -= attackAction.damage;
+    }
   }
   //returns melee damage based on melee and weapon
   getMelee() {
@@ -785,23 +854,23 @@ class Enemy {
           switch(this.animation.frame) {
             case 0:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 0));
+              this.sprite.setActive(new Pair(0, 0));
               break;
             case 1:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(1, 0));
+              this.sprite.setActive(new Pair(1, 0));
               break;
             case 2:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 1));
+              this.sprite.setActive(new Pair(0, 1));
               break;
             case 3:
               this.animation.frame = 0;
-              this.sprites.body.setActive(new Pair(1, 0));
+              this.sprite.setActive(new Pair(1, 0));
               break;
             default:
               this.animation.frame = 0;
-              this.sprites.body.setActive(new Pair(2, 1));
+              this.sprite.setActive(new Pair(2, 1));
           }
         }
       } else if(this.animation.state === "move") {
@@ -810,34 +879,34 @@ class Enemy {
           switch(this.animation.frame) {
             case 0:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 2));
+              this.sprite.setActive(new Pair(0, 2));
               break;
             case 1:
               this.animation.frame = 0;
-              this.sprites.body.setActive(new Pair(1, 2));
+              this.sprite.setActive(new Pair(1, 2));
               break;
             default:
               this.animation.frame = 0;
-              this.sprites.body.setActive(new Pair(1, 2));
+              this.sprite.setActive(new Pair(1, 2));
           }
         }
       } else if(this.animation.state === "jump") {
-        this.sprites.body.setActive(new Pair(1, 1));
+        this.sprite.setActive(new Pair(1, 1));
       } else if(this.animation.state === "attack") {
         if(this.animation.deltaTime > 0.1) {
           this.animation.deltaTime = 0;
           switch(this.animation.frame) {
             case 0:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 0));
+              this.sprite.setActive(new Pair(0, 0));
               break;
             case 1:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(0, 3));
+              this.sprite.setActive(new Pair(0, 3));
               break;
             case 2:
               this.animation.frame++;
-              this.sprites.body.setActive(new Pair(1, 3));
+              this.sprite.setActive(new Pair(1, 3));
               break;
           }
         } 
@@ -847,13 +916,8 @@ class Enemy {
         renderHealthbar(this, tileSize);
       }
       //body facing update and render
-      this.sprites.body.hf = this.leftFacing;
-      rt.renderImage(this.transform, this.sprites.body);
-      //hand facing update and render if applicabb;e
-      if(this.sprites.hand) {
-        this.sprites.hand.hf = this.leftFacing;
-        rt.renderImage(this.transform, this.sprites.hand)
-      }
+      this.sprite.hf = this.leftFacing;
+      rt.renderImage(this.transform, this.sprite);
       //bubble attempt
       this.effects.forEach((statusEffect) => {
         if(tk.randomNum(0, 200) === 0) {
@@ -869,8 +933,12 @@ class Enemy {
       statusEffect.update();
     });
   }
-  //basic ai logic
   runTurn() {
+    //fall check
+    if(this.tile.type === "pit" && !this.flying) {
+      return new Fall(this);
+    }
+    //basic ai logic
     this.playerLock = !raycast(this.tile.index, player.tile.index);
     let heuristicToPlayer = currentPC.heuristic(player.tile.index, this.tile.index);
     switch(this.state) {
@@ -1091,7 +1159,7 @@ class Item {
     this.eType = "item"
     //location data as entity
     if(inventorySpawn) {
-      this.convert(player);
+      this.convert(inventorySpawn);
       this.tile = null;
     } else {
       this.transform = transform;
@@ -1166,29 +1234,42 @@ class Potion extends Item {
       case "shield":
         this.sprite.setActive(new Pair(0, 2));
         break;
-      case "damage":
+      case "strength":
         this.sprite.setActive(new Pair(1, 2));
         break;
     }
   }
   activate() {
+    //remove self from inventory
+    let deleted = false;
+    for(let invI = 0; invI < player.inventory.length; invI++) {
+      if(player.inventory[invI].name === this.name && !deleted) {
+        player.inventory.splice(invI, 1);
+        deleted = true;
+      }
+    }
+    //apply effect
+    let newEff;
     switch(this.variety) {
       case "health":
-        new StatusEffect("healing", 10, player);
-        currentEC.add(new ParticleEffect(player.transform, "float", images.hud.miniIcons.setActive(new Pair(1, 0)), 5, 0.5, 70));
+        newEff = new StatusEffect("healing", 10, player);
         break;
       case "haste":
-        new StatusEffect("haste", 10, player);
-        currentEC.add(new ParticleEffect(player.transform, "float", images.hud.miniIcons.setActive(new Pair(1, 2)), 5, 0.5, 70));
+        newEff = new StatusEffect("haste", 10, player);
         break;
       case "poison":
         break;
       case "levitation":
+        newEff = new StatusEffect("levitation", 10, player);
         break;
       case "shield":
+        newEff = new StatusEffect("shield", 20, player);
         break;
-      case "damage":
+      case "strength":
+        newEff = new StatusEffect("strength", 15, player);
         break;
     }
+    //icon bubble burst on consumption
+    currentEC.add(new ParticleEffect(player.transform, "float", newEff.icon, 5, 0.5, 70));
   }
 }

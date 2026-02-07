@@ -21,6 +21,8 @@ class Tile {
     this.type;
     //boolean is walkable
     this.walkable;
+    //boolean is flyable
+    this.flyable;
     //countdown until a new enemy spawns
     this.enemySpawnCountdown = 75;
   }
@@ -53,6 +55,7 @@ class Wall extends Tile {
     super(transform, index, sprite, parentLevel, overlay);
     this.type = "wall"
     this.walkable = false;
+    this.flyable = false;
     this.sprite.setActive(new Pair(tk.randomNum(0, 1), 3));
   }
   //choose appropriate sprite to match adjacent floor positions
@@ -81,6 +84,7 @@ class Pit extends Tile {
     super(transform, index, sprite, parentLevel, overlay);
     this.type = "pit"
     this.walkable = false;
+    this.flyable = true;
     this.sprite.setActive(new Pair(tk.randomNum(0, 1), 4));
     //boolean determining if a sprite should be rendered (below floor/wall)
     this.usingSprite = false;
@@ -127,6 +131,7 @@ class Floor extends Tile {
     super(transform, index, sprite, parentLevel, overlay);
     this.type = "floor"
     this.walkable = true;
+    this.flyable = true;
     //floor sprites can be freely rotated
     this.sprite.r = tk.randomNum(0, 3) * 90;
     this.sprite.setActive(new Pair(tk.randomNum(0, 1), tk.randomNum(0, 1)));
@@ -547,13 +552,13 @@ class Level {
     if(client.type !== "level") {
       //block targeting enemies unless they are target index (for hit)
       this.enemies.forEach((enemy) => {
-        if(!(enemy.tile.index.isEqualTo(client.tile.index) || enemy.tile.index.isEqualTo(client.targetIndex))) {
+        if(!(enemy.tile.index.isEqualTo(client.tile.index) || enemy.tile.index.isEqualTo(client.targetIndex) || !enemy.tile.visible)) {
           retList.push(enemy.tile.index.duplicate());
         }
       });
       //block targeting npcs unless they are target index (for interaction)
       this.npcs.forEach((npc) => {
-        if(!(npc.tile.index.isEqualTo(client.tile.index) || npc.tile.index.isEqualTo(client.targetIndex))) {
+        if(!(npc.tile.index.isEqualTo(client.tile.index) || npc.tile.index.isEqualTo(client.targetIndex) || !npc.tile.visible)) {
           retList.push(npc.tile.index.duplicate());
         }
       });
@@ -568,10 +573,10 @@ class Level {
         retList.push(player.tile.index.duplicate());
       }
     }
-    //get walls, pits, and non revealed tiles
+    //get walls, pits if not flying, and non revealed tiles
     for(let ct = 0; ct < 2500; ct++) {
       let tObj = this.map[Math.floor(ct / 50)][ct % 50];
-      if((!tObj.walkable) || (client.type === "player" && !tObj.revealed)) {
+      if((!((tObj.flyable && client.flying) || tObj.walkable)) || (client.type === "player" && !tObj.revealed)) {
         retList.push(tObj.index);
       }
     }

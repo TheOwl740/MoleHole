@@ -9,7 +9,7 @@ function updateHomescreen() {
   cs.fillAll(new Fill("#783b0d", 1));
   //update mole animation
   let tempPlayer = new Player(new Pair(cs.w / 2, cs.h / -2));
-  [tempPlayer.sprites.body.w, tempPlayer.sprites.body.h] = [tileSize * 3, tileSize * 3]; 
+  [tempPlayer.sprite.w, tempPlayer.sprite.h] = [tileSize * 3, tileSize * 3]; 
   //circle render
   hrt.renderCircle(new Pair(cs.w / 2, cs.h / -2), new Circle(((landscape ? cs.w : cs.h) / 2) * (((Math.sin(ec / 50) + 1) / 8) + 1)), new Fill("#301f04", (Math.sin(ec / 50) + 2) / 4), null);
   hrt.renderCircle(new Pair(cs.w / 2, cs.h / -2), new Circle(((landscape ? cs.w : cs.h) / 3) * (((Math.sin(ec / 25) + 1) / 8) + 1)), new Fill("#301f04", (Math.sin(ec / 25) + 2) / 4), null);
@@ -112,9 +112,9 @@ function updateHUD() {
   }
   //player overlay
   hrt.renderImage(new Pair(hudTileSize * 1.5, hudTileSize * -0.5), images.hud.player);
-  let playerIcon = player.sprites.body.duplicate();
+  let playerIcon = player.sprite.duplicate();
   [playerIcon.w, playerIcon.h] = [hudTileSize, hudTileSize];
-  playerIcon.setActive(player.sprites.body.activeTile);
+  playerIcon.setActive(player.sprite.activeTile);
   hrt.renderImage(new Pair(hudTileSize * 0.5, hudTileSize * -0.9), playerIcon);
   //stop/wait button
   images.hud.stopWait.setActive(new Pair(player.targetIndex ? 1 : 0, 0));
@@ -127,7 +127,7 @@ function updateHUD() {
     player.path = null;
   }
   //skill tree access
-  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.skillTree.collider())) {
+  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.skillTree.collider()) && currentTC.turnOrder[0].type === "player") {
     gameState = "skillTree";
   }
   //effects screen access
@@ -135,7 +135,7 @@ function updateHUD() {
     gameState = "effects";
   }
   //inventory tree access
-  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.inventory.collider())) {
+  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.inventory.collider()) && currentTC.turnOrder[0].type === "player") {
     gameState = "inventory";
   }
 }
@@ -167,7 +167,7 @@ function updateSkillTree() {
   //exit button render
   hrt.renderImage(buttonData.exit.transform(), images.hud.exit);
   //exit button function
-  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.exit.collider())) {
+  if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, buttonData.exit.collider()) && bc.ready()) {
     gameState = "inGame";
   }
   //main text and points
@@ -258,7 +258,7 @@ function updateInventory() {
     }
     if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, new Collider(useBox.transform, new Rectangle(0, useBox.dimensions.x, useBox.dimensions.y))) && bc.ready()) {
       gameState = "inGame";
-      inventorySelection.activate();
+      player.queuedItemUse = inventorySelection;
       inventorySelection = null;
     }
   }
