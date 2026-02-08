@@ -254,7 +254,18 @@ function updateInventory() {
     hrt.renderText(new Pair(cs.w / 2, tileSize * -1.5), new TextNode("pixelFont", "Selected: " + inventorySelection.name, 0, tileSize / 3, "center"), new Fill("#ffffff", 1));
     //button activation
     if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, new Collider(dropBox.transform, new Rectangle(0, dropBox.dimensions.x, dropBox.dimensions.y))) && bc.ready()) {
-
+      gameState = "inGame";
+      inventorySelection.convert(player.tile);
+      let removed = false;
+      let cItem = 0;
+      while(cItem < player.inventory.length && !removed) {
+        if(player.inventory[cItem].name === inventorySelection.name) {
+          player.inventory.splice(cItem, 1);
+          removed = true;
+        }
+        cItem++;
+      }
+      inventorySelection = null;
     }
     if(clicking && tk.detectCollision(tapData.realClick ? tapData.rcObj.transform : et.cursor, new Collider(useBox.transform, new Rectangle(0, useBox.dimensions.x, useBox.dimensions.y))) && bc.ready()) {
       gameState = "inGame";
@@ -333,6 +344,38 @@ function drill(startTile, steps) {
     if(activeIndex.x > 49 || activeIndex.y > 49 || activeIndex.x < 0 || activeIndex.y < 0) {
       activeIndex = startTile.index.duplicate();
     }
+  }
+}
+//returns a loot item
+function lootRoll(tier, tile) {
+  let lootSeed;
+  if(tier === 1) {
+    lootSeed = tk.randomNum(1, 6)
+    switch(lootSeed) {
+      case 1:
+        return new Potion(tile.transform, tile, "haste", false);
+      case 2:
+        return new Potion(tile.transform, tile, "levitation", false);
+      case 3:
+        return new Potion(tile.transform, tile, "strength", false);
+      default:
+        return new Potion(tile.transform, tile, "health", false);
+    }
+  }
+  if(tier === 2) {
+    lootSeed = tk.randomNum(1, 2)
+    switch(lootSeed) {
+      case 1:
+        return new Potion(tile.transform, tile, "poison", false);
+      case 2:
+        return new Potion(tile.transform, tile, "shield", false);
+    }
+  }
+  if(tier === 3) {
+
+  }
+  if(tier === 4) {
+
   }
 }
 //updates zoom on wheel event

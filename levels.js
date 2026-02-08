@@ -23,8 +23,6 @@ class Tile {
     this.walkable;
     //boolean is flyable
     this.flyable;
-    //countdown until a new enemy spawns
-    this.enemySpawnCountdown = 75;
   }
   //returns this tile's collider
   collider() {
@@ -272,6 +270,7 @@ class Level {
     this.visionRange = 5;
     this.levelId = levelId;
     this.zone = "";
+    this.enemySpawnCountdown = 75;
     //assign zone
     if(this.levelId === 0) {
       this.zone = "The Mole Hill";
@@ -468,6 +467,17 @@ class Level {
           }
         }
     }
+    for(let i = 0; i < (this.levelId / 2); i++) {
+      let spawnTile = null;
+      let validSpawn = false;
+      while(!validSpawn) {
+        spawnTile = this.getIndex(new Pair(tk.randomNum(0, 49), tk.randomNum(0, 49)));
+        if(spawnTile.type === "floor") {
+          this.items.push(lootRoll(Math.ceil(this.levelId / 9), spawnTile));
+          validSpawn = true;
+        }
+      }
+    }
     //place initial enemies (relies on player spawn)
     for(let i = 0; i < (this.levelId * 1.5) + 5; i++) {
       this.spawnEnemy(true);
@@ -477,17 +487,17 @@ class Level {
     for(let i = 0; i < 2500; i++) {
       this.map[Math.floor(i / 50)][i % 50].render();
     }
+    for(let i = 0; i < this.items.length; i++) {
+      this.items[i].render();
+    }
+    for(let i = 0; i < this.nmes.length; i++) {
+      this.nmes[i].render();
+    }
     for(let i = 0; i < this.enemies.length; i++) {
       this.enemies[i].render();
     }
     for(let i = 0; i < this.npcs.length; i++) {
       this.npcs[i].render();
-    }
-    for(let i = 0; i < this.nmes.length; i++) {
-      this.nmes[i].render();
-    }
-    for(let i = 0; i < this.items.length; i++) {
-      this.items[i].render();
     }
   }
   //pinged by turn controller each turn
@@ -503,11 +513,21 @@ class Level {
     //remove dead enemies
     for(let i = 0; i < this.enemies.length; i++) {
       if(this.enemies[i].health.current < 1) {
+        //remove turn
         currentTC.remove(this.enemies[i]);
+        //add death fade
         currentEC.add(new Death(this.enemies[i]));
+        //add xp to player
         player.addXP(this.enemies[i].xpValue);
+        //reduce next spawn countdown
         this.enemySpawnCountdown -= 5;
+        //reset tile
         this.enemies[i].tile.entity = null;
+        //loot chance
+        if(tk.randomNum(0, 5) === 0) {
+          this.items.push(lootRoll(1, this.enemies[i].tile));
+        }
+        //remove from index
         this.enemies.splice(i, 1);
         i--;
       }
@@ -527,10 +547,8 @@ class Level {
       if(this.nmes[i].deleteNow) {
         if(this.nmes[i].type === "chest") {
           this.items.push(this.nmes[i].loot);
-          this.nmes[i].tile.entity = this.nmes[i].loot;
-        } else {
-          this.nmes[i].tile.entity = null;
         }
+        this.nmes[i].tile.entity = null;
         this.nmes.splice(i, 1);
         i--;
       }
@@ -538,7 +556,6 @@ class Level {
     //remove deleted items
     for(let i = 0; i < this.items.length; i++) {
       if(this.items[i].deleteNow) {
-        this.items[i].tile.entity = null;
         this.items.splice(i, 1);
         i--;
       }

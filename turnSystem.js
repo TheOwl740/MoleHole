@@ -363,7 +363,7 @@ class ItemCollect extends Action {
     //while running
     if(this.remainingDuration > 1) {
       this.actor.transform.rotationalIncrease(this.moveDirection, this.stepLength);
-      //last frame
+    //last frame
     } else {
       if(this.actor.type === "player") {
         currentLevel.reshade();
@@ -381,7 +381,9 @@ class ItemCollect extends Action {
   }
   complete() {
     //update item relationship
-    this.item.convert(this.actor);
+    this.items.forEach((item) => {
+      item.convert(this.actor);
+    });
     //update tile relationship
     updateTERelationship(this.actor.tile, this.actor, this.targetTile);
     //physically move

@@ -310,9 +310,9 @@ class Player {
       }
       //check against items
       for(let i = 0; i < currentLevel.items.length; i++) {
-        if(currentLevel.items[i].tile.index.isEqualTo(this.movePath[0])) {
+        if(currentLevel.items[i].tile.index.isEqualTo(this.movePath[0]) && currentLevel.items[i].tile.index.isEqualTo(this.targetIndex)) {
           this.targetIndex = null;
-          return new ItemCollect(this, currentLevel.items);
+          return new ItemCollect(this, [].concat(currentLevel.items[i].tile.items));
         }
       }
       //move if no interactions
@@ -1136,20 +1136,7 @@ class Chest extends NME {
   }
   open() {
     this.deleteNow = true;
-    let lootSeed = tk.randomNum(0, 100 + (this.tier * 25))
-    if(lootSeed < 10) {
-      this.loot = new Potion(this.transform, this.tile, "haste", false);
-    } else if(lootSeed < 20) {
-      this.loot = new Potion(this.transform, this.tile, "poison", false);
-    } else if(lootSeed < 30) {
-      this.loot = new Potion(this.transform, this.tile, "levitation", false);
-    } else if(lootSeed < 40) {
-      this.loot = new Potion(this.transform, this.tile, "shield", false);
-    } else if(lootSeed < 50) {
-      this.loot = new Potion(this.transform, this.tile, "damage", false);
-    } else {
-      this.loot = new Potion(this.transform, this.tile, "health", false);
-    }
+    this.loot = lootRoll(this.tier + 1, this.tile);
   }
 }
 //item class
@@ -1185,7 +1172,12 @@ class Item {
   }
   render() {
     if(this.tile.visible) {
-      rt.renderImage(this.transform, this.sprite);
+      let activeSprite = this.sprite.duplicate();
+      if(this.tile.entity !== null) {
+        [activeSprite.w, activeSprite.h] = [tileSize / 2, tileSize / 2];
+        activeSprite.alpha = 0.5;
+      }
+      rt.renderImage(this.transform, activeSprite);
     }
   }
   //when an entity picks up or drops the item
@@ -1204,6 +1196,7 @@ class Item {
       this.tile = newOwner;
       this.transform = newOwner.transform.duplicate();
       this.tile.items.push(this);
+      this.parentLevel.items.push(this);
     }
   }
   //activates whatever the item does
