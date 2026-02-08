@@ -137,6 +137,19 @@ class Floor extends Tile {
     this.sprite.setActive(new Pair(tk.randomNum(0, 1), tk.randomNum(0, 1)));
     //entity bond point
     this.entity = null;
+    //item list
+    this.items = [];
+  }
+  removeItem(itemName) {
+    let itemI = 0;
+    let removed = false;
+    while(itemI < this.items.length && !removed) {
+      if(this.items[itemI].name === itemName) {
+        this.items.splice(itemI, 1);
+        removed = true;
+      }
+      itemI++;
+    }
   }
 }
 //tile overlay

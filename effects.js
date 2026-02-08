@@ -227,19 +227,27 @@ class ParticleEffect extends Effect {
   }
 }
 class PickupAnimation extends Effect {
-  constructor(item, entity) {
+  constructor(items, entity) {
     super(35, entity.transform.duplicate(), false);
-    this.item = item;
-    this.sprite = item.sprite.duplicate();
+    this.items = [].concat(items);
+    this.transforms = [];
+    this.sprites = [];
+    this.rotation = (360 / items.length);
     this.vel = 10;
+    for(let cItem = 0; cItem < this.items.length; cItem++) {
+      this.transforms.push(new Pair(0, 0));
+      this.sprites.push(this.items[cItem].sprite.duplicate());
+    }
   }
   update() {
     this.remainingDuration--;
     this.vel -= 0.6;
-    this.sprite.y += this.vel;
-    [this.sprite.w, this.sprite.h] = [tileSize - (this.duration - this.remainingDuration), tileSize - (this.duration - this.remainingDuration)];
-    this.sprite.alpha = this.remainingDuration / this.duration;
-    rt.renderImage(this.transform, this.sprite);
+    for(let cItem = 0; cItem < this.items.length; cItem++) {
+      this.transforms[cItem].rotationalIncrease((cItem * this.rotation) + 90, this.vel);
+      [this.sprites[cItem].w, this.sprites[cItem].h] = [tileSize - (this.duration - this.remainingDuration), tileSize - (this.duration - this.remainingDuration)];
+      this.sprites[cItem].alpha = this.remainingDuration / this.duration;
+      rt.renderImage(tk.pairMath(this.transform, this.transforms[cItem], "add"), this.sprites[cItem]);
+    }
   }
 }
 //DIALOG CLASS

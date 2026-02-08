@@ -335,14 +335,14 @@ class ItemUse extends Action {
   }
 }
 class ItemCollect extends Action {
-  constructor(actor, item) {
+  constructor(actor, items) {
     super(actor, actor.moveTime + 0.5);
     this.type = "itemCollect";
     [this.duration, this.remainingDuration] = [10, 10];
     //tile being moved to
-    this.targetTile = item.tile;
+    this.targetTile = items[0].tile;
     //item being collected
-    this.item = item;
+    this.items = items;
     //distance to move each frame
     this.stepLength = tk.pairMath(this.actor.transform, this.targetTile.transform, "distance") / this.duration;
     //direction to move
@@ -372,9 +372,11 @@ class ItemCollect extends Action {
       //set back to idle
       this.actor.animation.state = "idle";
       //update item relationship
-      this.item.convert(this.actor);
+      this.items.forEach((item) => {
+        item.convert(this.actor);
+      });
       //play pickup animation
-      currentEC.add(new PickupAnimation(this.item, this.actor))
+      currentEC.add(new PickupAnimation(this.items, this.actor))
     }
   }
   complete() {

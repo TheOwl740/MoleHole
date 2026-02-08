@@ -312,7 +312,7 @@ class Player {
       for(let i = 0; i < currentLevel.items.length; i++) {
         if(currentLevel.items[i].tile.index.isEqualTo(this.movePath[0])) {
           this.targetIndex = null;
-          return new ItemCollect(this, currentLevel.items[i]);
+          return new ItemCollect(this, currentLevel.items);
         }
       }
       //move if no interactions
@@ -1166,7 +1166,8 @@ class Item {
       //assign tile
       this.tile = tile;
       this.parentLevel = tile.parentLevel;
-      updateTERelationship(null, this, this.tile);
+      //add item to tile
+      this.tile.items.push(this);
       //owner data as item
       this.owner = null;
       //removal boolean for the level
@@ -1190,6 +1191,7 @@ class Item {
   //when an entity picks up or drops the item
   convert(newOwner) {
     if(this.owner === null) {
+      this.tile.removeItem(this.name);
       this.deleteNow = true;
       this.owner = newOwner;
       this.parentLevel = null;
@@ -1201,7 +1203,7 @@ class Item {
       this.parentLevel = currentLevel
       this.tile = newOwner;
       this.transform = newOwner.transform.duplicate();
-      updateTERelationship(null, this, this.tile);
+      this.tile.items.push(this);
     }
   }
   //activates whatever the item does
