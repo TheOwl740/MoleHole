@@ -755,11 +755,11 @@ class PathfindingController {
     if(originIndex.isEqualTo(targetIndex)) {
       return null;
     }
-    nonwalkableIndices.forEach((nwIndex) => {
+    for(let nwIndex of nonwalkableIndices) {
       if(nwIndex.isEqualTo(targetIndex)) {
         return null;
       }
-    });
+    }
     //while there are nodes to be evaluated
     while(open.length > 0) {
       //checks loop count
