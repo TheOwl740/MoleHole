@@ -65,7 +65,7 @@ class Pair {
     return this.x === pair.x && this.y === pair.y;
   }
   distToOrigin() {
-    return ((this.x ** 2) + (this.y ** 2)) ** 0.5;
+    return Math.hypot(this.x, this.y);
   }
 }
 //event tracker contains keypress, mouse and tap data, and can block context keys.
@@ -564,7 +564,7 @@ class Toolkit {
       case "modulus":
         return new Pair(pair1.x % pair2.x, pair1.y % pair2.y);
       case "distance":
-        return Math.sqrt(Math.pow(pair1.x - pair2.x, 2) + Math.pow(pair1.y - pair2.y, 2));
+        return Math.hypot(pair1.x - pair2.x, pair1.y - pair2.y);
       case "angle":
         return Math.round(Math.atan2(pair1.y - pair2.y, pair1.x - pair2.x) * 57.2958) + 180;
     }
@@ -711,7 +711,7 @@ class PathfindingController {
     if(this.allowDiagonals) {
       const dx = Math.abs(a.x - b.x);
       const dy = Math.abs(a.y - b.y);
-      return (dx < dy) ? 0.4 * dx + dy : 0.4 * dy + dx;
+      return Math.hypot(dx, dy);
     } else {
       return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
@@ -755,6 +755,7 @@ class PathfindingController {
     if(originIndex.isEqualTo(targetIndex)) {
       return null;
     }
+    //return null if target is nonwalkable
     for(let nwIndex of nonwalkableIndices) {
       if(nwIndex.isEqualTo(targetIndex)) {
         return null;
@@ -762,36 +763,10 @@ class PathfindingController {
     }
     //while there are nodes to be evaluated
     while(open.length > 0) {
-      //checks loop count
+      //check for time overflow
       loopCount++;
       if(loopCount > loopCap) {
         return null;
-      }
-      //sort list by transform, then by f, then by h
-      open.sort((a, b) => {
-        if (a.index.isEqualTo(b.index)) {
-          if (a.f !== b.f) {
-            return a.f - b.f;
-          } else {
-            return a.h - b.h;
-          }
-        } else {
-          if (a.index.x !== b.index.x) {
-            return a.index.x - b.index.x;
-          } else {
-            return a.index.y - b.index.y;
-          }
-        }
-      });
-      //delete alike transforms
-      let currentOpenI = open[0].index;
-      for(let oi = 1; oi < open.length; oi++) {
-        if(open[oi].index.isEqualTo(currentOpenI)) {
-          open.splice(oi, 1);
-          oi--;
-        } else {
-          currentOpenI = open[oi].index;
-        }
       }
       //best node option tracker
       let bestNode = null;
@@ -826,7 +801,17 @@ class PathfindingController {
       }
       //add valid neighbors to open
       this.getNeighborIndices(current.index, closed, nonwalkableIndices).forEach((neighborIndex) => {
-        open.push(new PathNode(this, current, neighborIndex, targetIndex));
+        let foundMatch = false;
+        for(let node of open) {
+          if(node.index.isEqualTo(neighborIndex) && new PathNode(this, current, neighborIndex, targetIndex).g < node.g) {
+            foundMatch = true;
+            node.g = new PathNode(this, current, neighborIndex, targetIndex).g;
+            node.parentNode = current;
+          }
+        }
+        if(!foundMatch) {
+          open.push(new PathNode(this, current, neighborIndex, targetIndex));
+        }
       });
     }
     return null;
