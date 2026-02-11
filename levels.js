@@ -328,15 +328,11 @@ class Level {
     //place rooms randomly until all are open
     let activeIndices = [];
     let loopActive = true;
-    let tolerance = 0;
     while(loopActive) {
-      if(tolerance < 30) {
-        tolerance += 0.01
-      }
       loopActive = false;
       activeIndices = [];
       activeRooms.forEach((room) => {
-        activeIndices.push(new Pair(tk.randomNum(2 + room.h, 17 + tolerance), tk.randomNum(2, (17 - room.w) + tolerance)));
+        activeIndices.push(new Pair(tk.randomNum(2 + room.h, 47), tk.randomNum(2, 47 - room.w)));
       });
       for(let room = 0; room < activeRooms.length; room++) {
         for(let comparedRoom = 0; comparedRoom < activeRooms.length; comparedRoom++) {
@@ -344,6 +340,31 @@ class Level {
             if(tk.detectCollision(activeRooms[room].getIndexCollider(activeIndices[room]), activeRooms[comparedRoom].getIndexCollider(activeIndices[comparedRoom]))) {
               loopActive = true;
             }
+          }
+        }
+      }
+    }
+    //converge rooms
+    for(let convIt = 0; convIt < 15; convIt++) {
+      for(let ri = 0; ri < activeRooms.length; ri++) {
+        let centerAngle = tk.pairMath(activeIndices[ri], new Pair(24, 24), "angle");
+        let converging = true;
+        let activeIndex = activeIndices[ri].duplicate();
+        while(converging && tk.pairMath(activeIndex, new Pair(24, 24), "distance") > 2) {
+          //converge index
+          activeIndex.rotationalIncrease(centerAngle, 1.4).round(0);
+          //compare against other rooms
+          for(let cri = 0; cri < activeRooms.length; cri++) {
+            if(ri !== cri) {
+              //if colliding, exit convergence
+              if(tk.detectCollision(activeRooms[ri].getIndexCollider(activeIndices[ri]), activeRooms[cri].getIndexCollider(activeIndices[cri]))) {
+                converging = false;
+              }
+            }
+          }
+          //if no collision, then apply this convergence step
+          if(converging) {
+            activeIndices[ri] = activeIndex.duplicate();
           }
         }
       }
@@ -764,7 +785,7 @@ class Room {
     return retObj;
   }
   getIndexCollider(tlIndex) {
-    return new Collider(tlIndex.duplicate().add(new Pair(this.w / 2, this.h / 2)), new Rectangle(0, this.w + 4, this.h + 4));
+    return new Collider(tlIndex.duplicate().add(new Pair(this.w / 2, this.h / 2)).round(1), new Rectangle(0, this.w + 3, this.h + 3));
   }
 }
 

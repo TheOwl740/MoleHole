@@ -638,7 +638,6 @@ class Minnie extends NPC {
   }
   //custom interactions
   getInteraction() {
-    console.log(tutorial.stage)
     switch(tutorial.stage) {
       case 1:
         dialogController.queued.push(new Dialog(this, "Dad has asked me to wake you for an emergency family meeting.", false));
