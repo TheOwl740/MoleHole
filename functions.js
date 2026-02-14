@@ -395,4 +395,3 @@ function updateZoom(e) {
     }
   }
 }
-document.addEventListener("wheel", updateZoom);

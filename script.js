@@ -30,6 +30,7 @@ function update() {
       currentEC.update(false);
       updateHUD();
       currentEC.update(true);
+      debug.revealAll()
       break;
     case "skillTree":
       updateSkillTree();
@@ -49,3 +50,6 @@ function update() {
 //TIMER START
 gt = new GameTimer(update, 16);
 gt.start();
+
+//EXTRA LISTENERS
+document.addEventListener("wheel", updateZoom);
