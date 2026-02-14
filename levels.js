@@ -305,8 +305,12 @@ class Level {
         this.map[i][ii] = new Wall(new Pair((i - 25) * (tileSize - 1), (ii - 25) * (tileSize - 1)), new Pair(i, ii), images.tilesets.dirt, this);
       }
     }
-    //set of prepped rooms
+    //array of prepped rooms
     let activeRooms = [];
+    //array of matching origin section indices
+    let activeSections = [];
+    //set of consumed sections including those consumed by wide and tall rooms
+    let blockedSections = new Set();
     //add entrance room
     if(this.levelId === 0) {
       //marshall's room entrance
@@ -318,16 +322,15 @@ class Level {
       //normal entrance
       activeRooms.push(tileMaps[6]);
     }
-    //set of matching stamp origin section indices
-    let stampSections = [];
-    //entrance always goes in center, add initial section index and links
-    stampSections.push(new Pair(3, 3));
+    //entrance always goes in center, add initial section index and blocked index
+    activeSections.push(new Pair(3, 3));
+    blockedSections.add(activeSections[0].stringKey());
     //value of rooms for treasure balancing
     let totalValue = 0;
     //list of eligible rooms gathered from tilemaps
     let eligibleRooms = [];
     for(let room of tileMaps) {
-      //check that room is an entrance or exit and not blocked
+      //check that room is an entrance or exit and not blocked floor
       if(!([activeRooms[0].id, "exit"].includes(room.id) || room.blockedFloors.includes(this.levelId))) {
         //add eligible rooms to list
         eligibleRooms.push(room);
@@ -345,9 +348,24 @@ class Level {
         eligibleRooms.splice(rsi, 1)
         continue;
       }
-      //validate mutual link to existing room
+      //connection valid holds parent connector index or false
+      let cValid = false;
+      //room indexer to pick a random eligible room
+      let ri = 0;
+      //while cycle limiter
+      let lCycle = 0;
+      //search for valid link (matching connections)
+      while(lCycle < 50 && !cValid) {
+        lCycle++;
+        ri = tk.randomNum(0, activeRooms.length - 1);
+        cValid = activeRooms[ri].validateConnection(eligibleRooms[rsi]);
+      }
+      //continue if invalid
+      if(!cValid) {
+        continue;
+      }
+      //check for room overlap in blocked sections, on all tiles consumed by room
     }
-
     //reskin floor adjacent walls and pits and attach overlays
     for(let i = 0; i < 50; i++) {
       for(let ii = 0; ii < 50; ii++) {
@@ -626,20 +644,20 @@ class Room {
     for(let tileRow of this.tileMap) {
       //left
       if(tileRow[0] === 'e') {
-        this.connections.push(new Pair(-1, this.tall ? tk.randomNum(0, 1) : 0))
+        this.connections.push(new Pair(-1, 0))
       }
       //right
       if(tileRow[tileRow.length - 1] === 'e') {
-        this.connections.push(new Pair(this.wide ? 2 : 1, this.tall ? tk.randomNum(0, 1) : 0))
+        this.connections.push(new Pair(1, 0))
       }
     }
     //top
     if(this.tileMap[0].includes('e')) {
-      this.connections.push(new Pair(this.wide ? tk.randomNum(0, 1) : 0, 1))
+      this.connections.push(new Pair(0, 1))
     }
     //bottom
     if(this.tileMap[this.tileMap.length - 1].includes('e')) {
-      this.connections.push(new Pair(this.wide ? tk.randomNum(0, 1) : 0, this.tall ? -2 : -1))
+      this.connections.push(new Pair(0, -1))
     }
   }
   stamp(level, tlIndex) {
@@ -707,6 +725,24 @@ class Room {
       retObj.entranceIndices.splice(farthestEntrance, 1);
     }
     return retObj;
+  }
+  //validates the connection between two rooms, returning true or false based on if they can be matched
+  validateConnection(childRoom) {
+    //cycle through this room's connections
+    for(let ci = 0; ci < this.connections.length; ci++) {
+      //check each connection if it is a pair
+      if(ci.type === "pair") {
+        //cycle through child room's connections
+        for(let connectPoint of childRoom.connections) {
+          //check for inverses (connection match)
+          if(tk.pairMath(connectPoint, this.connections[ci], "add").isEqualTo(new Pair(0, 0))) {
+            return this.connections[ci].duplicate();
+          }
+        }
+      }
+    }
+    //false if no valid connections
+    return false;
   }
 }
 
