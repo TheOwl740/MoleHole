@@ -69,9 +69,10 @@ class Pair {
   }
   stringKey(applyString) {
     if(typeof applyString === "string") {
-      let nVals = applyValue.split(',');
+      let nVals = applyString.split(',');
       this.x = Number(nVals[0]);
       this.y = Number(nVals[1]);
+      return this;
     }
     return `${this.x},${this.y}`
   }
