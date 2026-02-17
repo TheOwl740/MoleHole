@@ -334,7 +334,7 @@ class Level {
     let eligibleRooms = [];
     for(let room of tileMaps) {
       //check that room is an entrance or exit and not blocked floor
-      if(!([activeRooms[0].id, "exit"].includes(room.id) || room.blockedFloors.includes(this.levelId))) {
+      if(!([activeRooms[0].id, "exitRoom"].includes(room.id) || room.blockedFloors.includes(this.levelId))) {
         //add eligible rooms to list
         eligibleRooms.push(room);
       }
@@ -342,14 +342,21 @@ class Level {
     //room search index for eligible rooms
     let rsi;
     //select and prep rooms
-    while(activeRooms.length < this.levelId + 4) {
-      //select a room at random
-      rsi = tk.randomNum(0, eligibleRooms.length - 1);
-      //validate tier value
-      if(totalValue + eligibleRooms[rsi].tier > 3) {
-        //delete and continue if overvalued
-        eligibleRooms.splice(rsi, 1)
-        continue;
+    while(activeRooms.length < this.levelId + 5) {
+      //normal rooms (no exit on level 0)
+      if(activeRooms.length < this.levelId + 4 || this.levelId === 0) {
+        //select a room at random
+        rsi = tk.randomNum(0, eligibleRooms.length - 1);
+        //validate tier value
+        if(totalValue + eligibleRooms[rsi].tier > 3) {
+          //delete and continue if overvalued
+          eligibleRooms.splice(rsi, 1)
+          continue;
+        }
+      //force exit
+      } else {
+        eligibleRooms = [tileMaps[7]];
+        rsi = 0;
       }
       //connection valid holds parent connector index or false
       let cValid = false;
@@ -363,11 +370,12 @@ class Level {
         ri = tk.randomNum(0, activeRooms.length - 1);
         cValid = activeRooms[ri].validateConnection(activeSections[ri], eligibleRooms[rsi], blockedSections);
       }
-      //if valid, apply new room, origin, and stamp room
+      //if valid, apply new room, origin, stamp room, and remove eligible room
       if(cValid) {
         activeRooms.push(eligibleRooms[rsi]);
         activeSections.push(cValid);
         eligibleRooms[rsi].stamp(this, cValid);
+        eligibleRooms.splice(rsi, 1);
       }
     }
     //reskin floor adjacent walls and pits and attach overlays
@@ -408,7 +416,7 @@ class Level {
       default:
         for(let room = 0; room < activeRooms.length; room++) {
           if(activeRooms[room].id === "entranceRoom") {
-            this.playerSpawn = this.getIndex(new Pair(activeIndices[room].x + 2, activeIndices[room].y - 2)).transform.duplicate();
+            this.playerSpawn = this.getIndex(new Pair(2, -2).add(activeRooms[room].tlIndex)).transform.duplicate();
           }
         }
     }
@@ -420,7 +428,7 @@ class Level {
       while(lCycle < 2500 && !validSpawn) {
         lCycle++;
         spawnTile = this.getIndex(new Pair(tk.randomNum(0, 49), tk.randomNum(0, 49)));
-        if(spawnTile.type === "floor") {
+        if(spawnTile.walkable && !["entrance", "exit"].includes(spawnTile.overlay?.overlayType)) {
           this.items.push(lootRoll(Math.ceil(this.levelId / 9), spawnTile));
           validSpawn = true;
         }
@@ -572,7 +580,7 @@ class Level {
       //pick random index
       spawnTile = this.getIndex(new Pair(tk.randomNum(0, 49), tk.randomNum(0, 49)));
       //check for walkable floor
-      if(spawnTile.type === "floor" && spawnTile.entity === null) {
+      if(spawnTile.walkable && spawnTile.entity === null && !["entrance", "exit"].includes(spawnTile.overlay?.overlayType)) {
         //check for player
         if(earlySpawn) {
           if(tk.pairMath(spawnTile.index, this.getTile(this.playerSpawn).index, "distance") > this.visionRange * 1.5) {
@@ -678,7 +686,9 @@ class Room {
       nonwalkableIndices: []
     }
     //generate valid tl index
-    this.tlIndex = new Pair((sectionIndex.x * 7) + 1, (sectionIndex.y + 1) * 7);
+    this.tlIndex = new Pair((sectionIndex.x * 7) + 1, ((sectionIndex.y + 1) * 7) - 1);
+    //add some for random positioning within tile
+    this.tlIndex.add(new Pair(tk.randomNum(0, (this.wide ? 13 : 6) - this.w), tk.randomNum(0, -1 * ((this.tall ? 13 : 6) - this.h))));
     //apply tiles
     for(let i = 0; i < this.w; i++) {
       for(let ii = 0; ii < this.h; ii++) {
@@ -749,10 +759,10 @@ class Room {
     for(let ci = 0; ci < this.connections.length; ci++) {
       //check each connection if it is a pair
       if(this.connections[ci].type === "pair") {
-        //cycle through child room's connections
-        for(let connectPoint of childRoom.connections) {
+        //cycle through child room's connect points
+        for(let cpi = 0; cpi < childRoom.connections.length; cpi++) {
           //check for inverses (connection match)
-          if(tk.pairMath(connectPoint, this.connections[ci], "add").isEqualTo(new Pair(0, 0))) {
+          if(tk.pairMath(childRoom.connections[cpi], this.connections[ci], "add").isEqualTo(new Pair(0, 0))) {
             //determine consumed tiles
             let consumedSections = [];
             //add base
@@ -770,6 +780,9 @@ class Room {
             }
             if(childRoom.tall) {
               consumedSections.push(consumedSections[0].duplicate().add(new Pair(0, -1)))
+              if(consumedSections.length > 1) {
+                consumedSections.push(consumedSections[0].duplicate().add(new Pair(1, -1)))
+              }
             }
             //apply parent section origin to consumed sections
             consumedSections.forEach((section) => {
@@ -788,15 +801,13 @@ class Room {
             if(consumptionValid) {
               //save origin point
               let returnedOrigin = consumedSections[0];
-              //remove pair from sections
-              this.connections.splice(ci, 1)
-              //add child to connections
-              this.connections.push(childRoom);
+              //apply mutual connection as rooms
+              this.connections[ci] = childRoom
+              childRoom.connections[cpi] = this;
               //add blocked sections to blocked set
-              blockedSections.add(consumedSections[0].stringKey());
-              if(consumedSections[1]) {
-                blockedSections.add(consumedSections[0].stringKey())
-              }
+              consumedSections.forEach((section) => {
+                blockedSections.add(section.stringKey());
+              });
               return returnedOrigin;
             }
           }
@@ -826,10 +837,10 @@ const tileMaps = [
   [],
   [
     ['w','w','w','w','w','w','w'],
-    ['w','f','f','f','f','f','w'],
+    ['w','f','f','f','f','f','e'],
     ['w','f','f','f','f','p','w'],
     ['w','f','f','f','f','p','w'],
-    ['e','f','f','f','p','p','w'],
+    ['w','f','f','f','p','p','w'],
     ['w','e','w','w','w','w','w']
   ]),
   new Room("marshallsRoom", 0, 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
@@ -921,7 +932,7 @@ const tileMaps = [
     ['w','w','w','e','w','w']
   ]),
   //web entrance room f1
-  new Room("webEntrance", 0, 4, [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
+  new Room("entranceRoom", 0, 4, [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("decor1"),
       index: new Pair(2, 2)
@@ -1015,7 +1026,7 @@ const tileMaps = [
   new Room("largeTallEmpty", 0, 2, [0], [
     {
       overlay: new TileOverlay("decor2"),
-      index: new Pair(5, 4)
+      index: new Pair(1, 4)
     },
     {
       overlay: new TileOverlay("blocker2"),
@@ -1023,15 +1034,15 @@ const tileMaps = [
     },
     {
       overlay: new TileOverlay("decor3"),
-      index: new Pair(7, 7)
+      index: new Pair(2, 7)
     },
     {
       overlay: new TileOverlay("blocker3"),
-      index: new Pair(3, 2)
+      index: new Pair(1, 2)
     },
     {
       overlay: new TileOverlay("decor1"),
-      index: new Pair(7, 1)
+      index: new Pair(2, 1)
     }
   ],
   [],

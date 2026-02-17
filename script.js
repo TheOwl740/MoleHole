@@ -10,10 +10,8 @@ function update() {
   if(!landscape) {
     tapData.update();
   }
-  //update game based on state
   //update clicking
   clicking = (tapData.realClick || et.getClick("left"));
-  //update tutorial
   //state based function timeline
   switch(gameState) {
     case "homescreen":
@@ -30,7 +28,6 @@ function update() {
       currentEC.update(false);
       updateHUD();
       currentEC.update(true);
-      debug.revealAll()
       break;
     case "skillTree":
       updateSkillTree();
@@ -45,6 +42,8 @@ function update() {
       updateFailscreen();
       break;
   }
+  //update debug
+  debug.update();
 }
 
 //TIMER START

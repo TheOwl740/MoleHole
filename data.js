@@ -265,16 +265,9 @@ const tutorial = {
 };
 //debug options
 const debug = {
-  clearDialog: () => {
-    dialogController.queued = [];
-  },
-  revealAll: () => {
-    //reveal all tiles
-    for(let ti = 0; ti < 2500; ti++) {
-      currentLevel.map[Math.floor(ti / 50)][ti % 50].visible = true;
-      currentLevel.map[Math.floor(ti / 50)][ti % 50].revealed = true;
-    }
-  },
+  coordinateOutput: false,
+  revealAll: false,
+  blockDialog: false,
   teleport: (targetTile) => {
     player.transform = targetTile.transform.duplicate();
     updateTERelationship(player.tile, player, targetTile);
@@ -286,5 +279,19 @@ const debug = {
     player.inventory.push(new Potion(null, null, "levitation", player));
     player.inventory.push(new Potion(null, null, "shield", player));
     player.inventory.push(new Potion(null, null, "haste", player));
+  },
+  update: () => {
+    if(debug.revealAll && gameState === "inGame") {
+      for(let ti = 0; ti < 2500; ti++) {
+        currentLevel.map[Math.floor(ti / 50)][ti % 50].visible = true;
+        currentLevel.map[Math.floor(ti / 50)][ti % 50].revealed = true;
+      }
+    }
+    if(debug.blockDialog && gameState === "inGame") {
+      dialogController.queued = [];
+    }
+    if(debug.coordinateOutput && gameState === "inGame" && currentLevel.getTile(et.dCursor(rt))) {
+      hrt.renderText(new Pair(tileSize, tileSize - cs.h), new TextNode("pixelFont", currentLevel.getTile(et.dCursor(rt)).index.stringKey(), 0, tileSize / 3, "center"), new Fill("#ffffff", 1));
+    }
   }
 };
