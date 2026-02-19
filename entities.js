@@ -150,7 +150,7 @@ class Player {
     this.inventory = [];
     //creates a tile entity relationship if placed in the context of a level
     if(currentLevel !== null) {
-      updateTERelationship(null, this, currentLevel.getTile(transform));
+      updateTERelationship(null, this, currentLevel.getTransform(transform));
     }
   }
   render() {
@@ -272,7 +272,7 @@ class Player {
     //if there is no target and there is a targeting click
     if(this.targetIndex === null && clicking && bc.ready()) {
       //get tile at click
-      let clickedTile = currentLevel.getTile(landscape ? et.dCursor(rt) : tapData.rcObj.dTransform(rt));
+      let clickedTile = currentLevel.getTransform(landscape ? et.dCursor(rt) : tapData.rcObj.dTransform(rt));
       //if valid tile
       if(clickedTile?.type !== "wall" && clickedTile?.revealed) {
         this.targetIndex = clickedTile.index;

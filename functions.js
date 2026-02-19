@@ -74,7 +74,7 @@ function loadLevel(levelId) {
   currentPC = new PathfindingController(currentLevel.map, true);
   //apply start transform to player
   player = new Player(currentLevel.playerSpawn.duplicate());
-  updateTERelationship(null, player, currentLevel.getTile(currentLevel.playerSpawn));
+  updateTERelationship(null, player, currentLevel.getTransform(currentLevel.playerSpawn));
   player.movePath = null;
   //initialize turn controller data
   currentTC.initialize();

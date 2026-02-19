@@ -290,8 +290,8 @@ const debug = {
     if(debug.blockDialog && gameState === "inGame") {
       dialogController.queued = [];
     }
-    if(debug.coordinateOutput && gameState === "inGame" && currentLevel.getTile(et.dCursor(rt))) {
-      hrt.renderText(new Pair(tileSize, tileSize - cs.h), new TextNode("pixelFont", currentLevel.getTile(et.dCursor(rt)).index.stringKey(), 0, tileSize / 3, "center"), new Fill("#ffffff", 1));
+    if(debug.coordinateOutput && gameState === "inGame" && currentLevel.getTransform(et.dCursor(rt))) {
+      hrt.renderText(new Pair(tileSize, tileSize - cs.h), new TextNode("pixelFont", currentLevel.getTransform(et.dCursor(rt)).index.stringKey(), 0, tileSize / 3, "center"), new Fill("#ffffff", 1));
     }
   }
 };

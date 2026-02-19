@@ -271,18 +271,28 @@ class TileOverlay {
 //level class for each floor
 class Level {
   constructor(levelId) {
-    //data initialization
     this.type = "level";
+    //contains generated tile map
     this.map = [];
+    //various entity lists
     this.enemies = [];
     this.npcs = [];
     this.nmes = [];
     this.items = [];
-    this.playerSpawn = null;
+    //range of raycast vision in the level
     this.visionRange = 5;
-    this.levelId = levelId;
-    this.zone = "";
+    //countdown in turn pings until next enemy spawn
     this.enemySpawnCountdown = 75;
+    //numerical id of the level from 0-16
+    this.levelId = levelId;
+    //string name of the current zone
+    this.zone;
+    //tileset for the floors and walls
+    this.tileset;
+    //pathfinding controller for carve operations
+    this.carvePather;
+    //player spawn transform
+    this.playerSpawn;
     //assign zone
     if(this.levelId === 0) {
       this.zone = "The Mole Hill";
@@ -307,13 +317,15 @@ class Level {
         this.map[i][ii] = new Wall(new Pair((i - 25) * (tileSize - 1), (ii - 25) * (tileSize - 1)), new Pair(i, ii), images.tilesets.dirt, this);
       }
     }
+    //prep carve pathfinding controller
+    this.carvePather = new PathfindingController(this.map, false);
     //array of prepped rooms
     let activeRooms = [];
     //array of matching origin section indices
     let activeSections = [];
     //set of consumed sections including those consumed by wide and tall rooms
     let blockedSections = new Set();
-    //add entrance room
+    //add entrance room to activerooms
     if(this.levelId === 0) {
       //marshall's room entrance
       activeRooms.push(tileMaps[1]);
@@ -324,7 +336,7 @@ class Level {
       //normal entrance
       activeRooms.push(tileMaps[6]);
     }
-    //add entrance
+    //add entrance room to active sections and blocked sections
     activeSections.push(new Pair(3, 3));
     blockedSections.add(activeSections[0].stringKey());
     activeRooms[0].stamp(this, activeSections[0]);
@@ -439,6 +451,7 @@ class Level {
       this.spawnEnemy(true);
     }
   }
+  //renders all tiles and entities
   render() {
     for(let i = 0; i < 2500; i++) {
       this.map[Math.floor(i / 50)][i % 50].render();
@@ -465,6 +478,7 @@ class Level {
       this.spawnEnemy(false);
     }
   }
+  //clears entities ready to be deleted. Runs each cycle
   update() {
     //remove dead enemies
     for(let i = 0; i < this.enemies.length; i++) {
@@ -517,7 +531,8 @@ class Level {
       }
     }
   }
-  getTile(transform) {
+  //returns a reference to the tile at the pair transform
+  getTransform(transform) {
     for(let tile = 0; tile < 2500; tile++) {
       if(tk.detectCollision(transform, this.map[Math.floor(tile / 50)][tile % 50].collider())) {
         return this.map[Math.floor(tile / 50)][tile % 50];
@@ -525,6 +540,7 @@ class Level {
     }
     return null;
   }
+  //returns a reference to the tile at the pair index
   getIndex(index) {
     if(index.x >= 0 && index.x < 50 && index.y >= 0 && index.y < 50) {
       return this.map[index.x][index.y] || null;
@@ -532,6 +548,7 @@ class Level {
       return null;
     }
   }
+  //returns nonwalkable indices for a specific client (entity or level)
   getNonWalkables(client) {
     const retList = [];
     //get entities that can't be walked on
@@ -568,6 +585,14 @@ class Level {
     }
     return retList;
   }
+  //carves a path between two level indices
+  carvePath(index1, index2, nonwalkableIndices) {
+    let carveIndices = this.carvePather.pathfind(index1, index2, nonwalkableIndices);
+    carveIndices.forEach((index) => {
+      this.map[index.x][index.y] = new Floor(this.map[index.x][index.y].transform, index, this.tileset, this, null);
+    });
+  }
+  //spawns and assigns a new enemy to this level. Earlyspawn parameter is used to allow for spawns before player is initialized during level gen
   spawnEnemy(earlySpawn) {
     //decides what enemy will spawn, for weighted spawns
     let enemySeed = tk.randomNum(0, 100)
@@ -583,7 +608,7 @@ class Level {
       if(spawnTile.walkable && spawnTile.entity === null && !["entrance", "exit"].includes(spawnTile.overlay?.overlayType)) {
         //check for player
         if(earlySpawn) {
-          if(tk.pairMath(spawnTile.index, this.getTile(this.playerSpawn).index, "distance") > this.visionRange * 1.5) {
+          if(tk.pairMath(spawnTile.index, this.getTransform(this.playerSpawn).index, "distance") > this.visionRange * 1.5) {
             validSpawn = true;
           }
         } else {
@@ -606,6 +631,7 @@ class Level {
         break;
     }
   }
+  //reshades all the tiles in relation to the player
   reshade() {
     //darken all tiles
     for(let ti = 0; ti < 2500; ti++) {
@@ -646,17 +672,32 @@ class Level {
 //room class for level stamping
 class Room {
   constructor(id, tier, entranceCount, blockedFloors, tileOverlays, entities, tileMap) {
+    //width and height in tiles, determined by tilemap
     [this.w, this.h] = [tileMap[0].length, tileMap.length];
+    //booleans for easier logic with double/quad section rooms
+    [this.wide, this.tall] = [this.w > 6, this.h > 6];
+    //name of room
     this.id = id;
+    //room quality tier for overall level valuation
     this.tier = tier;
+    //total number of entrances on this room (helps with level gen logic)
     this.entranceCount = entranceCount;
+    //floors this room cannot spawn on
     this.blockedFloors = blockedFloors;
+    //attached overlay modules
     this.tileOverlays = tileOverlays;
+    //attached entity modules (nmes)
     this.entities = entities;
+    //the relative character tilemap
     this.tileMap = tileMap;
+    //relative section distance pairs representing the directions the room can connect to other rooms
     this.connections = [];
-    this.wide = this.w > 6;
-    this.tall = this.h > 6;
+    //top left index of the room in level tilemap space
+    this.tlIndex;
+    //list of entrance indices, in level tilemap space
+    this.entranceIndices = [];
+    //list of indices in level tile space which cannot be carved by a carvepather
+    this.noncarveableIndices = [];
     //determine connection sides (only one max each side, no corners)
     for(let tileRow of this.tileMap) {
       //left
@@ -681,10 +722,6 @@ class Room {
     //set tileset to level theme
     let tileset = level.tileset.duplicate();
     //prep returns
-    const retObj = {
-      entranceIndices: [],
-      nonwalkableIndices: []
-    }
     //generate valid tl index
     this.tlIndex = new Pair((sectionIndex.x * 7) + 1, ((sectionIndex.y + 1) * 7) - 1);
     //add some for random positioning within tile
@@ -693,6 +730,7 @@ class Room {
     for(let i = 0; i < this.w; i++) {
       for(let ii = 0; ii < this.h; ii++) {
         let activeTile = level.map[this.tlIndex.x + i][this.tlIndex.y - ii];
+        //cycle through tilemap
         switch(this.tileMap[ii][i]) {
           case 'f':
             level.map[this.tlIndex.x + i][this.tlIndex.y - ii] = new Floor(activeTile.transform.duplicate(), activeTile.index.duplicate(), tileset, level, null);
@@ -705,12 +743,13 @@ class Room {
             break;
           case 'e':
             level.map[this.tlIndex.x + i][this.tlIndex.y - ii] = new Wall(activeTile.transform.duplicate(), activeTile.index.duplicate(), tileset, level, null);
-            retObj.entranceIndices.push(activeTile.index.duplicate());
+            //add entrance index marker
+            this.entranceIndices.push(activeTile.index.duplicate());
             break;
           }
-        //note entrances
+        //non entrance tiles are not valid to be carved
         if(this.tileMap[ii][i] !== 'e') {
-          retObj.nonwalkableIndices.push(activeTile.index.duplicate())
+          this.noncarveableIndices.push(activeTile.index.duplicate())
         }
       }
     }
@@ -733,21 +772,6 @@ class Room {
           break;
       }
     });
-    //trim entrances
-    while(retObj.entranceIndices.length > this.entranceCount) {
-      let farthestDist = false;
-      let farthestEntrance;
-      let currentDist;
-      for(let ent = 0; ent < retObj.entranceIndices.length; ent++) {
-        currentDist = tk.pairMath(retObj.entranceIndices[ent], new Pair(24, 24), "distance")
-        if(!farthestDist || farthestDist < currentDist) {
-          farthestDist = currentDist;
-          farthestEntrance = ent;
-        }
-      }
-      retObj.entranceIndices.splice(farthestEntrance, 1);
-    }
-    return retObj;
   }
   //validates the connection between two rooms, returning true or false based on if they can be matched
   validateConnection(parentSection, childRoom, blockedSections) {
@@ -801,9 +825,6 @@ class Room {
             if(consumptionValid) {
               //save origin point
               let returnedOrigin = consumedSections[0];
-              //apply mutual connection as rooms
-              this.connections[ci] = childRoom
-              childRoom.connections[cpi] = this;
               //add blocked sections to blocked set
               consumedSections.forEach((section) => {
                 blockedSections.add(section.stringKey());
