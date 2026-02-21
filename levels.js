@@ -342,6 +342,8 @@ class Level {
     activeRooms[0].stamp(this, activeSections[0]);
     //value of rooms for treasure balancing
     let totalValue = 0;
+    //total number of entrances to avoid box in
+    let totalEntrances = activeRooms[0].connections.length;
     //list of eligible rooms gathered from tilemaps
     let eligibleRooms = [];
     for(let room of tileMaps) {
@@ -354,13 +356,13 @@ class Level {
     //room search index for eligible rooms
     let rsi;
     //select and prep rooms
-    while(activeRooms.length < this.levelId + 5) {
+    while(activeRooms.length < this.levelId + 6) {
       //normal rooms (no exit on level 0)
       if(activeRooms.length < this.levelId + 4 || this.levelId === 0) {
         //select a room at random
         rsi = tk.randomNum(0, eligibleRooms.length - 1);
-        //validate tier value
-        if(totalValue + eligibleRooms[rsi].tier > 3) {
+        //validate tier value and entrances
+        if(totalValue + eligibleRooms[rsi].tier > 3 && (totalEntrances + eligibleRooms[rsi].connections.length) - 2 > 0) {
           //delete and continue if overvalued
           eligibleRooms.splice(rsi, 1)
           continue;
@@ -382,12 +384,15 @@ class Level {
         ri = tk.randomNum(0, activeRooms.length - 1);
         cValid = activeRooms[ri].validateConnection(activeSections[ri], eligibleRooms[rsi], blockedSections);
       }
-      //if valid, apply new room, origin, stamp room, and remove eligible room
+      //if valid, apply new room, origin, stamp room, remove eligible room, and update value and entrance counters
       if(cValid) {
         activeRooms.push(eligibleRooms[rsi]);
         activeSections.push(cValid);
         eligibleRooms[rsi].stamp(this, cValid);
+        totalEntrances += eligibleRooms[rsi].connections.length - 2;
+        totalValue += eligibleRooms[rsi].tier;
         eligibleRooms.splice(rsi, 1);
+        console.log(totalEntrances)
       }
     }
     //reskin floor adjacent walls and pits and attach overlays
@@ -671,7 +676,7 @@ class Level {
 }
 //room class for level stamping
 class Room {
-  constructor(id, tier, entranceCount, blockedFloors, tileOverlays, entities, tileMap) {
+  constructor(id, tier, blockedFloors, tileOverlays, entities, tileMap) {
     //width and height in tiles, determined by tilemap
     [this.w, this.h] = [tileMap[0].length, tileMap.length];
     //booleans for easier logic with double/quad section rooms
@@ -680,8 +685,6 @@ class Room {
     this.id = id;
     //room quality tier for overall level valuation
     this.tier = tier;
-    //total number of entrances on this room (helps with level gen logic)
-    this.entranceCount = entranceCount;
     //floors this room cannot spawn on
     this.blockedFloors = blockedFloors;
     //attached overlay modules
@@ -699,6 +702,10 @@ class Room {
     //list of indices in level tile space which cannot be carved by a carvepather
     this.noncarveableIndices = [];
     //determine connection sides (only one max each side, no corners)
+    //top
+    if(this.tileMap[0].includes('e')) {
+      this.connections.push(new Pair(0, 1))
+    }
     for(let tileRow of this.tileMap) {
       //left
       if(tileRow[0] === 'e') {
@@ -708,10 +715,6 @@ class Room {
       if(tileRow[tileRow.length - 1] === 'e') {
         this.connections.push(new Pair(1, 0))
       }
-    }
-    //top
-    if(this.tileMap[0].includes('e')) {
-      this.connections.push(new Pair(0, 1))
     }
     //bottom
     if(this.tileMap[this.tileMap.length - 1].includes('e')) {
@@ -743,12 +746,12 @@ class Room {
             break;
           case 'e':
             level.map[this.tlIndex.x + i][this.tlIndex.y - ii] = new Wall(activeTile.transform.duplicate(), activeTile.index.duplicate(), tileset, level, null);
-            //add entrance index marker
-            this.entranceIndices.push(activeTile.index.duplicate());
             break;
           }
-        //non entrance tiles are not valid to be carved
-        if(this.tileMap[ii][i] !== 'e') {
+        //add entrances and nonwalkables
+        if(this.tileMap[ii][i] === 'e') {
+          this.entranceIndices.push(activeTile.index.duplicate());
+        } else {
           this.noncarveableIndices.push(activeTile.index.duplicate())
         }
       }
@@ -841,7 +844,7 @@ class Room {
 }
 
 const tileMaps = [
-  new Room("pitRoom", 0, 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
+  new Room("pitRoom", 0, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("couchLeft"),
       index: new Pair(2, 2)
@@ -857,14 +860,14 @@ const tileMaps = [
   ],
   [],
   [
-    ['w','w','w','w','w','w','w'],
+    ['w','w','e','w','w','w','w'],
     ['w','f','f','f','f','f','e'],
     ['w','f','f','f','f','p','w'],
     ['w','f','f','f','f','p','w'],
     ['w','f','f','f','p','p','w'],
     ['w','e','w','w','w','w','w']
   ]),
-  new Room("marshallsRoom", 0, 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
+  new Room("marshallsRoom", 0, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("greenBedLeft"),
       index: new Pair(3, 1)
@@ -880,13 +883,13 @@ const tileMaps = [
   ],
   [],
   [
-    ['w','w','e','w','w','w'],
+    ['w','w','w','w','w','w'],
+    ['e','f','f','f','f','w'],
     ['w','f','f','f','f','w'],
-    ['w','f','f','f','f','w'],
-    ['e','f','f','f','f','e'],
-    ['w','w','e','w','w','w']
+    ['w','f','f','f','f','e'],
+    ['w','w','w','w','w','w']
   ]),
-  new Room("minniesRoom", 0, 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
+  new Room("minniesRoom", 0, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("pinkBedLeft"),
       index: new Pair(3, 1)
@@ -904,11 +907,11 @@ const tileMaps = [
   [
     ['w','w','e','w','w','w'],
     ['w','f','f','f','f','w'],
-    ['e','f','f','f','f','w'],
+    ['w','f','f','f','f','w'],
     ['w','f','f','f','f','w'],
     ['w','w','e','w','w','w']
   ]),
-  new Room("maxwellsRoom", 0, 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
+  new Room("maxwellsRoom", 0, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("greenBedLeft"),
       index: new Pair(3, 1)
@@ -924,13 +927,13 @@ const tileMaps = [
   ],
   [],
   [
-    ['w','w','w','e','w','w'],
+    ['w','w','w','w','w','w'],
     ['w','f','f','f','f','w'],
     ['w','f','f','f','f','w'],
-    ['w','f','f','f','f','e'],
+    ['w','f','f','f','f','w'],
     ['w','e','w','w','w','w']
   ]),
-  new Room("parentsRoom", 0, 1, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
+  new Room("parentsRoom", 0, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("orangeBedLeft"),
       index: new Pair(3, 1)
@@ -946,14 +949,23 @@ const tileMaps = [
   ],
   [],
   [
-    ['w','w','w','e','w','w'],
+    ['w','w','w','w','w','w'],
     ['w','f','f','f','f','w'],
     ['w','f','f','f','f','w'],
-    ['e','f','f','f','f','e'],
-    ['w','w','w','e','w','w']
+    ['e','f','f','f','f','w'],
+    ['w','w','w','w','w','w']
+  ]),
+  //basic 4 way junction
+  new Room("4wayJunction", 0, [], [], [],
+  [
+    ['w','w','e','w','w'],
+    ['w','f','f','f','w'],
+    ['e','f','f','f','e'],
+    ['w','f','f','f','w'],
+    ['w','w','e','w','w']
   ]),
   //web entrance room f1
-  new Room("entranceRoom", 0, 4, [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
+  new Room("entranceRoom", 0, [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], [
     {
       overlay: new TileOverlay("decor1"),
       index: new Pair(2, 2)
@@ -968,7 +980,7 @@ const tileMaps = [
     ['w','w','e','w','w']
   ]),
   //other entrances
-  new Room("entranceRoom", 0, 4, [0, 1], [
+  new Room("entranceRoom", 0, [0, 1], [
     {
       overlay: new TileOverlay("entrance"),
       index: new Pair(2, 2)
@@ -983,7 +995,7 @@ const tileMaps = [
     ['w','w','e','w','w']
   ]),
   //exits
-  new Room("exitRoom", 0, 4, [0], [
+  new Room("exitRoom", 0, [0], [
     {
       overlay: new TileOverlay("exit"),
       index: new Pair(2, 2)
@@ -998,7 +1010,7 @@ const tileMaps = [
     ['w','w','e','w','w']
   ]),
   //small size square empty room
-  new Room("smallEmpty", 0, 2, [0], [
+  new Room("smallEmpty", 0, [0], [
     {
       overlay: new TileOverlay("decor3"),
       index: new Pair(1, 1)
@@ -1017,7 +1029,7 @@ const tileMaps = [
     ['w','w','e','w','w']
   ]),
   //medium wide room
-  new Room("mediumWideEmpty", 0, 2, [0], [
+  new Room("mediumWideEmpty", 0, [0], [
     {
       overlay: new TileOverlay("decor3"),
       index: new Pair(1, 1)
@@ -1044,7 +1056,7 @@ const tileMaps = [
     ['w','w','w','e','w','w','w']
   ]),
   //large vertical room
-  new Room("largeTallEmpty", 0, 2, [0], [
+  new Room("largeTallEmpty", 0, [0], [
     {
       overlay: new TileOverlay("decor2"),
       index: new Pair(1, 4)
@@ -1079,7 +1091,7 @@ const tileMaps = [
     ['w','w','e','w','w']
   ]),
   //basic 4 way junction
-  new Room("4wayJunction", 0, 4, [0], [
+  new Room("4wayJunction", 0, [0], [
     {
       overlay: new TileOverlay("statue"),
       index: new Pair(2, 2)
@@ -1094,7 +1106,7 @@ const tileMaps = [
     ['w','w','e','w','w']
   ]),
   //wide 2 way junction
-  new Room("junction2", 0, 2, [0], [
+  new Room("junction2", 0, [0], [
     {
       overlay: new TileOverlay("statue"),
       index: new Pair(3, 2)
@@ -1109,7 +1121,7 @@ const tileMaps = [
     ['w','w','w','w','w','w','w']
   ]),
   //tall 2 way junction
-  new Room("junction2", 0, 2, [0], [
+  new Room("junction2", 0, [0], [
     {
       overlay: new TileOverlay("statue"),
       index: new Pair(2, 3)
@@ -1126,7 +1138,7 @@ const tileMaps = [
     ['w','w','e','w','w']
   ]),
   //small web filled room
-  new Room("small", 0, 1, [0], [
+  new Room("small", 0, [0], [
     {
       overlay: new TileOverlay("decor1"),
       index: new Pair(1, 1)
@@ -1173,7 +1185,7 @@ const tileMaps = [
     ['w','w','e','w','w']
   ]),
   //small treasure room bottom entrance
-  new Room("smallTreasure", 1, 1, [0], [
+  new Room("smallTreasure", 1, [0], [
     {
       overlay: new TileOverlay("decor4"),
       index: new Pair(3, 1)
