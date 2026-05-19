@@ -361,7 +361,7 @@ class Level {
     //select and prep rooms
     while(activeRooms.length < this.levelId + 6) {
       //normal rooms (no exit on level 0)
-      if(activeRooms.length < this.levelId + 4 || this.levelId === 0) {
+      if(activeRooms.length < this.levelId + 5 || this.levelId === 0) {
         //select a room at random
         rsi = tk.randomNum(0, eligibleRooms.length - 1);
         //validate tier value and entrances
