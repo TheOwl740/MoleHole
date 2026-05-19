@@ -332,10 +332,10 @@ class Level {
       activeRooms.push(dereferencedTileMaps[1]);
     } else if(this.levelId === 1) {
       //web room entrance
-      activeRooms.push(dereferencedTileMaps[5]);
+      activeRooms.push(dereferencedTileMaps[6]);
     } else {
       //normal entrance
-      activeRooms.push(dereferencedTileMaps[6]);
+      activeRooms.push(dereferencedTileMaps[7]);
     }
     //add entrance room to active sections and blocked sections
     activeSections.push(new Pair(3, 3));
@@ -372,7 +372,7 @@ class Level {
         }
       //force exit
       } else {
-        eligibleRooms = [dereferencedTileMaps[7]];
+        eligibleRooms = [dereferencedTileMaps[8]];
         rsi = 0;
       }
       //connection valid holds parent connector index or false
@@ -621,9 +621,13 @@ class Level {
   //carves a path between two level indices
   carvePath(index1, index2, nonwalkableIndices) {
     let carveIndices = this.carvePather.pathfind(index1, index2, nonwalkableIndices);
-    carveIndices.forEach((index) => {
-      this.map[index.x][index.y] = new Floor(this.map[index.x][index.y].transform, index, this.tileset, this, null);
-    });
+    if(carveIndices !== null) {
+      carveIndices.forEach((index) => {
+        this.map[index.x][index.y] = new Floor(this.map[index.x][index.y].transform, index, this.tileset, this, null);
+      });
+    } else {
+      console.log(`Carve failure from ${index1.stringKey()} to ${index2.stringKey()}`)
+    }
   }
   //spawns and assigns a new enemy to this level. Earlyspawn parameter is used to allow for spawns before player is initialized during level gen
   spawnEnemy(earlySpawn) {
