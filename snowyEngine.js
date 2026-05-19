@@ -762,11 +762,13 @@ class PathfindingController {
     let loopCount = 0;
     //return null if at target
     if(originIndex.isEqualTo(targetIndex)) {
+      console.log("origin target")
       return null;
     }
     //return null if target is nonwalkable
     for(let nwIndex of nonwalkableIndices) {
       if(nwIndex.isEqualTo(targetIndex)) {
+        console.log("nw target")
         return null;
       }
     }
@@ -775,6 +777,7 @@ class PathfindingController {
       //check for time overflow
       loopCount++;
       if(loopCount > loopCap) {
+        console.log("loopcap")
         return null;
       }
       //best node option tracker
@@ -823,6 +826,7 @@ class PathfindingController {
         }
       });
     }
+    console.log("full search")
     return null;
   }
   toKey(index) {

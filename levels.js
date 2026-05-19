@@ -325,16 +325,17 @@ class Level {
     let activeSections = [];
     //set of consumed sections including those consumed by wide and tall rooms
     let blockedSections = new Set();
+    let dereferencedTileMaps = [].concat(tileMaps);
     //add entrance room to activerooms
     if(this.levelId === 0) {
       //marshall's room entrance
-      activeRooms.push(tileMaps[1]);
+      activeRooms.push(dereferencedTileMaps[1]);
     } else if(this.levelId === 1) {
       //web room entrance
-      activeRooms.push(tileMaps[5]);
+      activeRooms.push(dereferencedTileMaps[5]);
     } else {
       //normal entrance
-      activeRooms.push(tileMaps[6]);
+      activeRooms.push(dereferencedTileMaps[6]);
     }
     //add entrance room to active sections and blocked sections
     activeSections.push(new Pair(3, 3));
@@ -344,9 +345,11 @@ class Level {
     let totalValue = 0;
     //total number of entrances to avoid box in
     let totalEntrances = activeRooms[0].connections.length;
+    //cumulative non carveables
+    let noncarveableIndices = [];
     //list of eligible rooms gathered from tilemaps
     let eligibleRooms = [];
-    for(let room of tileMaps) {
+    for(let room of dereferencedTileMaps) {
       //check that room is an entrance or exit and not blocked floor
       if(!([activeRooms[0].id, "exitRoom"].includes(room.id) || room.blockedFloors.includes(this.levelId))) {
         //add eligible rooms to list
@@ -369,7 +372,7 @@ class Level {
         }
       //force exit
       } else {
-        eligibleRooms = [tileMaps[7]];
+        eligibleRooms = [dereferencedTileMaps[7]];
         rsi = 0;
       }
       //connection valid holds parent connector index or false
@@ -389,12 +392,32 @@ class Level {
         activeRooms.push(eligibleRooms[rsi]);
         activeSections.push(cValid);
         eligibleRooms[rsi].stamp(this, cValid);
+        noncarveableIndices = noncarveableIndices.concat(eligibleRooms[rsi].noncarveableIndices);
         totalEntrances += eligibleRooms[rsi].connections.length - 2;
         totalValue += eligibleRooms[rsi].tier;
         eligibleRooms.splice(rsi, 1);
-        console.log(totalEntrances)
       }
     }
+    //once active rooms are down, carve paths
+    activeRooms.forEach((room) => {
+      room.connections.forEach((connection) => {
+        if(connection.type === "room") {
+          let startEnt;
+          let endEnt;
+          let bestDist = null;
+          for(let ei1 of room.entranceIndices) {
+            for(let ei2 of connection.entranceIndices) {
+              if((!bestDist) || bestDist > tk.pairMath(ei1, ei2, "distance")) {
+                bestDist = tk.pairMath(ei1, ei2, "distance");
+                startEnt = ei1.duplicate();
+                endEnt = ei2.duplicate();
+              }
+            }
+          }
+          this.carvePath(startEnt, endEnt, noncarveableIndices);
+        }
+      });
+    });
     //reskin floor adjacent walls and pits and attach overlays
     for(let i = 0; i < 50; i++) {
       for(let ii = 0; ii < 50; ii++) {
@@ -410,14 +433,19 @@ class Level {
       case 0:
         //place npcs alongside player
         for(let room = 0; room < activeRooms.length; room++) {
+          let selectedTile;
           if(activeRooms[room].id === "marshallsRoom") {
             this.playerSpawn = this.getIndex(new Pair(activeRooms[room].tlIndex.x + 4, activeRooms[room].tlIndex.y - 1)).transform.duplicate();
-            this.npcs.push(new Minnie(this.getIndex(new Pair(activeRooms[room].tlIndex.x + 2, activeRooms[room].tlIndex.y - 1)).transform.duplicate(), this.getIndex(new Pair(activeRooms[room].tlIndex.y + 3, activeRooms[room].tlIndex.x - 1))))
+            selectedTile = this.getIndex(new Pair(activeRooms[room].tlIndex.x + 2, activeRooms[room].tlIndex.y - 1));
+            this.npcs.push(new Minnie(selectedTile.transform.duplicate(), selectedTile))
           }
           if(activeRooms[room].id === "pitRoom") {
-            this.npcs.push(new Michael(this.getIndex(new Pair(activeRooms[room].tlIndex.x + 4, activeRooms[room].tlIndex.y - 2)).transform.duplicate(), this.getIndex(new Pair(activeRooms[room].tlIndex.y + 4, activeRooms[room].tlIndex.x - 2))))
-            this.npcs.push(new Maxwell(this.getIndex(new Pair(activeRooms[room].tlIndex.x + 2, activeRooms[room].tlIndex.y - 4)).transform.duplicate(), this.getIndex(new Pair(activeRooms[room].tlIndex.y + 2, activeRooms[room].tlIndex.x - 4))))
-            this.npcs.push(new Magnolia(this.getIndex(new Pair(activeRooms[room].tlIndex.x + 3, activeRooms[room].tlIndex.y - 2)).transform.duplicate(), this.getIndex(new Pair(activeRooms[room].tlIndex.y + 3, activeRooms[room].tlIndex.x - 2))))
+            selectedTile = this.getIndex(new Pair(activeRooms[room].tlIndex.x + 4, activeRooms[room].tlIndex.y - 2));
+            this.npcs.push(new Michael(selectedTile.transform.duplicate(), selectedTile));
+            selectedTile = this.getIndex(new Pair(activeRooms[room].tlIndex.x + 2, activeRooms[room].tlIndex.y - 4));
+            this.npcs.push(new Maxwell(selectedTile.transform.duplicate(), selectedTile))
+            selectedTile = this.getIndex(new Pair(activeRooms[room].tlIndex.x + 3, activeRooms[room].tlIndex.y - 2));
+            this.npcs.push(new Magnolia(selectedTile.transform.duplicate(), selectedTile))
           }
         }
         //break as playerspawn is also placed, so no need for default
@@ -681,6 +709,7 @@ class Room {
     [this.w, this.h] = [tileMap[0].length, tileMap.length];
     //booleans for easier logic with double/quad section rooms
     [this.wide, this.tall] = [this.w > 6, this.h > 6];
+    this.type = "room";
     //name of room
     this.id = id;
     //room quality tier for overall level valuation
@@ -752,7 +781,7 @@ class Room {
         if(this.tileMap[ii][i] === 'e') {
           this.entranceIndices.push(activeTile.index.duplicate());
         } else {
-          this.noncarveableIndices.push(activeTile.index.duplicate())
+          this.noncarveableIndices.push(activeTile.index.duplicate());
         }
       }
     }
@@ -828,6 +857,9 @@ class Room {
             if(consumptionValid) {
               //save origin point
               let returnedOrigin = consumedSections[0];
+              //setup connection
+              this.connections[ci] = childRoom;
+              childRoom.connections[cpi] = this;
               //add blocked sections to blocked set
               consumedSections.forEach((section) => {
                 blockedSections.add(section.stringKey());
